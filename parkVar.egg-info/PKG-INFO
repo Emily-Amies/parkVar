@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: parkVar
+Version: 0.1.0
+Summary: A tool to annotate variants from a Parkinson's NGS Panel
+Author: Emily, Andy, Greg
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: certifi==2025.10.5
+Requires-Dist: charset-normalizer==3.4.4
+Requires-Dist: idna==3.11
+Requires-Dist: iniconfig==2.3.0
+Requires-Dist: packaging==25.0
+Requires-Dist: pluggy==1.6.0
+Requires-Dist: Pygments==2.19.2
+Requires-Dist: pytest==8.4.2
+Requires-Dist: requests==2.32.5
+Requires-Dist: setuptools==80.9.0
+Requires-Dist: urllib3==2.5.0
+Requires-Dist: wheel==0.45.1

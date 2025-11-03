@@ -1,0 +1,7 @@
+name: parkvar_env
+channels:
+  - defaults
+dependencies:
+  - pip
+  - python=3.13
+prefix: /home/ubuntu/.conda/envs/parkvar_env
