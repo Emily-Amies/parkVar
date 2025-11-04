@@ -5,7 +5,9 @@ import requests
 
 from parkVar.utils.logger_config import logger
 
-
+# Although variant_description is the only parameter currently being used,
+# with the other params being left as default when the function is called,
+# the other params have been included to allow for future flexibility
 def call_variant_validator(
     variant_description: str,
     genome_build: str = "GRCh38",
@@ -14,22 +16,25 @@ def call_variant_validator(
     checkonly: bool = True,
     liftover: bool = False,
 ) -> dict:
+
     """
-    Calls the Variant Validator API with the given parameters.
+    Calls the Variant Validator API LOVD endpoint with the specified parameters
+    . For additional information on the LOVD endpoint parameters refer to
+    Variant Validator's API documentation at:
+    https://rest.variantvalidator.org/.
 
     Args:
         variant_description (str): The variant description.
         genome_build (str): The genome build (default: "GRCh38").
         transcript_model (str): The transcript model (default: "all").
         select_transcripts (str): Whether to select transcripts (default:
-        "all").
-        checkonly (str): Whether to perform a check-only operation (default:
-        False).
-        liftover (str): Whether to perform a liftover (default: False).
+            "all").
+        checkonly (bool): Whether to return only the genomic variant
+            descriptions (default: True).
+        liftover (bool): Whether to perform a liftover (default: False).
 
     Returns:
-        dict: The JSON response from the API if successful.
-        None: If the request fails or an error occurs.
+        dict: The JSON response from the API if request is successful.
     """
     # Base URL for the API
     base_url = "https://rest.variantvalidator.org/LOVD/lovd"
@@ -47,25 +52,28 @@ def call_variant_validator(
     headers = {"accept": "application/json"}
 
     try:
-        # Perform the GET request
+        # Perform the GET request using the constructed URL, params, and
+        # headers
         response = requests.get(url, params=params, headers=headers)
 
-        if response.ok:
+        if response.status_code == 200:
             # Return the JSON response
             return response.json()
 
-        else:
-            # Log the error with the status code and response text
-            logger.error(
-                f"Error: Received status code {response.status_code} - "
-                f"{response.text}"
-            )
-            # Raise an HTTPError for responses codes >= 400 responses
-            response.raise_for_status()
+        # Log and raise an error for any status code that is not 200, as this
+        # is the only status code we expect for a successful request
+        logger.error(
+            f"Error: Received status code {response.status_code} - "
+            f"{response.text}"
+        )
 
-    # Catch, log and raise any unexpected errors during the request
+        raise requests.exceptions.HTTPError(
+            f"Unexpected status code {response.status_code}: {response.text}"
+        )
+
+    # Catch, log and raise any non status code related errors that would be
+    # missed in the above error handling
     except requests.exceptions.RequestException as e:
-        # Log the exception and re-raise it
         logger.error(f"Request failed: {e}")
         raise e
 
@@ -100,7 +108,7 @@ def validate_variant(variant_csv_path: str) -> pd.DataFrame:
             2,67890,G,C
 
         Output DataFrame:
-            #CHROM    POS REF ALT       g_hgvs
+            #CHROM  POS REF ALT g_hgvs
             1  12345   A   T  g.12345A>T
             2  67890   G   C  g.67890G>C
     """
@@ -145,7 +153,7 @@ def validate_variant(variant_csv_path: str) -> pd.DataFrame:
 
 def main():
     # Example usage
-    validated_df = validate_variant("/home/greg/Downloads/Patient1.csv")#
+    validated_df = validate_variant("/home/greg/Downloads/Patient1.csv")
     validated_df.to_csv("output.csv")
 
 if __name__ == "__main__":
