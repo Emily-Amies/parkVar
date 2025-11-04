@@ -30,14 +30,15 @@ line-length = 79
 fix = false
 
 [tool.ruff.lint]
-# Select specific rules to enforce (errors (E), warnings (W), and imports
-# warnings (I)
-select = ["E", "F", "W"]
+# Select specific rules to enforce (errors (E), Pyflakes (F) , warnings (W),
+# and imports warnings (I) - see https://www.flake8rules.com/ for details
+select = ["E", "F", "W", "I"]
 
 [tool.ruff.format]
 # Use 4-space indentation (PEP8 standard -
 # see https://peps.python.org/pep-0008/#indentation)
 indent-style = "space"
+indent-width = 4
 
 # Use double quotes for strings
 quote-style = "double"
