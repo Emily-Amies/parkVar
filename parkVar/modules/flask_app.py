@@ -1,25 +1,13 @@
 from flask import Flask, request, render_template_string
 import pandas as pd
 import io  # Needed for StringIO - used to make a file-like object in memory
+from parkVar.utils import flask_utils
+from pathlib import Path
+from datetime import datetime
 
 
 # Create Flask object
 app = Flask(__name__)
-
-# From ChatGPT - this is the HTML template for an form.
-# <h1> - header for the page
-# form - create form
-#   method = 'POST' - sends to the server
-#   enctype = required for file uploads
-#       imput type = restrict to csv files
-#       button type = adds a buttons called 'submit' and 'upload'
-UPLOAD_PAGE = """
-<h1>Upload CSV</h1>
-<form method='POST' enctype='multipart/form-data'>
-  <input type='file' name='file' accept='.csv' required>
-  <button type='submit'>Upload</button>
-</form>
-"""
 
 
 # Defines what the app does when someone visits the root URL '/'
@@ -28,7 +16,7 @@ def upload():
     # GET - Show the form
     if request.method == "GET":
         # Render the HTML template from a string rather than a file
-        return render_template_string(UPLOAD_PAGE)
+        return render_template_string(flask_utils.UPLOAD_PAGE)
 
     # Flask object that holds the file, loos for input field named 'file'
     # from the HTML form
@@ -39,28 +27,28 @@ def upload():
         return "No file uploaded", 400
 
     try:
-        # Read the raw bytes from the file object (that is encoded in UTF-8)
-        text = file.read().decode("utf-8")
-        # Read file into a pandas data frame
-        # io.StringIO - pandas usually expects a file on disk. When a file is
-        # read using a form, it is only raw bytes in memory. StringIO creates
-        # an in-memory file-object that acts like a normal file
-        df = pd.read_csv(io.StringIO(text))
+        df = flask_utils.create_df(file)
     except Exception as e:
         return f"Failed to read CSV: {e}", 400
 
+    # Create a temporary directory to store data
+    data_dir = Path(__file__).resolve().parent.parent.parent / "data"
+    data_dir.mkdir(exist_ok=True)
+
+    input_data_path = data_dir / "input_data.csv"
+
+    # This will save the dataframe as a CSV in a temporary data file.
+    # It will append the CSV to existing CSVs if present. This means the user
+    # can upload more than one CSV.
+    if input_data_path.exists():
+        df.to_csv(input_data_path, mode="a", index=False, header=False)
+    else:
+        df.to_csv(f"{data_dir}/input_data.csv", index=False)
+
     # Render the CSV as an HTML table using the template string
-    return render_template_string(
-        # Template for table
-        "<h1>Preview</h1><p>Rows: {{ n }}</p>{{ table|safe }}<hr>" \
-        + UPLOAD_PAGE,
-        n=len(df),  # Number of rows
-        # Convert the pandas dataframe into simple HTML table
-        table=df.to_html(index=False),  # index=False - remove the index column
-    )
+    return flask_utils.create_table(df)
 
 
 if __name__ == "__main__":
     app.debug = True
     app.run(host="127.0.0.1", port=5000)
-    # app.run(host='127.0.0.1', port=5000, debug=False)
