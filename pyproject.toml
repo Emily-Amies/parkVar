@@ -17,16 +17,15 @@ where = ['.']
 version = { attr = 'parkVar.__version__' }
 dependencies = { file = ['requirements.txt'] }
 
+[tool.ruff]
 # Set the maximum line length (PEP 8 recommends 79
 # https://peps.python.org/pep-0008/#maximum-line-length
 line-length = 79
 
 # Select specific rules to enforce (errors (E), warnings (W), and imports
-# warnings (I))
-select = ["E", "W", "I"]
+# warnings (I), quotes (Q000))
+lint.select = ["E", "W", "I", "Q000"]
 
-# Enforce double quotes for strings
-quote-style = "double"
 
 # Disable autofix by default (users must manually apply fixes)
 fix = false
