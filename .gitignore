@@ -1,5 +1,6 @@
 # Ignore all .log files
 *.log
 
-# Ignore the data/ directory
+# Ignore the data/ and pycache directories
 data/
+__pycache__/
