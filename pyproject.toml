@@ -27,10 +27,8 @@ dependencies = { file = ['requirements.txt'] }
 # Target Python version for compatibility
 target-version = "py313"
 
-
 # Set indent width to 4 spaces
 indent-width = 4
-
 
 # Set the maximum line length (PEP8 recommends 79 - see
 # https://peps.python.org/pep-0008/#maximum-line-length)
@@ -51,7 +49,6 @@ select = ["E", "F", "W", "I"]
 # Use 4-space indentation (PEP8 standard -
 # see https://peps.python.org/pep-0008/#indentation)
 indent-style = "space"
-
 
 # Use double quotes for strings
 quote-style = "double"

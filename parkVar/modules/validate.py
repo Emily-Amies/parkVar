@@ -5,6 +5,7 @@ import requests
 
 from parkVar.utils.logger_config import logger
 
+
 # Although variant_description is the only parameter currently being used,
 # with the other params being left as default when the function is called,
 # the other params have been included to allow for future flexibility
@@ -121,6 +122,9 @@ def validate_variant(variant_csv_path: str) -> pd.DataFrame:
     # Rate limit: 4 requests per second (delay = 1/4 = 0.25 seconds)
     min_interval = 0.25
 
+    # Loop over each row of variant df, construct variant description from the
+    # relevant columns, call the variant validator API, and store the g_hgvs in
+    # a new column
     for index, row in variant_df.iterrows():
         variant_desc = (
             f"{row['#CHROM']}-{row['POS']}-{row['REF']}-{row['ALT']}"
@@ -151,10 +155,12 @@ def validate_variant(variant_csv_path: str) -> pd.DataFrame:
     logger.info("Variant validation complete.")
     return variant_df
 
+
 def main():
     # Example usage
     validated_df = validate_variant("/home/greg/Downloads/Patient1.csv")
     validated_df.to_csv("output.csv")
+
 
 if __name__ == "__main__":
     main()

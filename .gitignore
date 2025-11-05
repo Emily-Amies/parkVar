@@ -1,6 +1,4 @@
-# Ignore all .log files
-*.log
-
-# Ignore the data/ and pycache directories
+# Ignore the following directories
 data/
 __pycache__/
+logs/
