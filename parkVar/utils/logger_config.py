@@ -35,13 +35,13 @@ def setup_logger(
     ----------
     logging.logger
         Configured logger object.
-    '''
+    """
 
     # Check parameters
     valid_levels = {50, 40, 30, 20, 10, 0}
 
     if not isinstance(name, str):
-        raise TypeError('name must be a string')
+        raise TypeError("name must be a string")
 
     if level not in valid_levels:
         raise ValueError(
@@ -49,7 +49,7 @@ def setup_logger(
         )
 
     if not isinstance(maxBytes, int) or maxBytes <= 0:
-        raise ValueError('maxBytes must be a positive integer')
+        raise ValueError("maxBytes must be a positive integer")
 
     if not isinstance(backupCount, int) or backupCount < 0:
         raise ValueError('backupCount must be a non-negative integer')
@@ -79,4 +79,5 @@ def setup_logger(
 
     return logger
 
-logger = setup_logger('parkVar_logger')
+
+logger = setup_logger("parkVar_logger")
