@@ -1,24 +1,25 @@
-import requests                
-import json                    
-import time                    
-import csv                     
-from typing import Optional    
+import requests
+import json
+import time
+import csv
+from typing import Optional
 
 # Defining constants etc
 
-EUTILS_BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"  
-NCBI_RATE_LIMIT_SLEEP = 0.34  # ~3 requests/sec as per NCBI 
+EUTILS_BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
+NCBI_RATE_LIMIT_SLEEP = 0.34  # ~3 requests/sec as per NCBI
 
 REVIEW_STATUS_TO_STARS = {
     "practice guideline": 4,
     "reviewed by expert panel": 3,
     "criteria provided, multiple submitters, no conflicts": 2,
-    "criteria provided, single submitter": 1,  
-    "no assertion criteria provided": 0,  
+    "criteria provided, single submitter": 1,
+    "no assertion criteria provided": 0,
     "no classification provided": 0,
 }
 
 # ClinVar querying functions
+
 
 def find_clinvar_uids_for_hgvs(hgvs: str) -> list:
     """
@@ -39,6 +40,7 @@ def find_clinvar_uids_for_hgvs(hgvs: str) -> list:
     # Return the list of UID strings
     return uids
 
+
 def fetch_esummary_for_uid(uid: str) -> dict:
     """
     Generate ClinVar esummary for a given UID and return the parsed JSON report.
@@ -58,6 +60,7 @@ def fetch_esummary_for_uid(uid: str) -> dict:
     # Return the esummary dictionary for that UID
     return esum_for_uid
 
+
 def extract_consensus_and_stars(esummary: dict) -> dict:
     """
     From ClinVar esummary JSON extract:
@@ -66,10 +69,14 @@ def extract_consensus_and_stars(esummary: dict) -> dict:
       - star_rating (integer 0-4 deduced from review_status_text)
     """
     # germline_classification dict from esummary
-    clin_sig = esummary.get("germline_classification", {}) if isinstance(esummary, dict) else {}
+    clin_sig = (
+        esummary.get("germline_classification", {})
+        if isinstance(esummary, dict)
+        else {}
+    )
     # Textual consensus classification (e.g., "Pathogenic", "Likely pathogenic", "Conflicting interpretations of pathogenicity")
     consensus_classification = clin_sig.get("description")
-    # The review_status text 
+    # The review_status text
     review_status_text = clin_sig.get("review_status")
     # Determine star rating from review_status_text
     star_rating: Optional[int] = None
@@ -86,11 +93,20 @@ def extract_consensus_and_stars(esummary: dict) -> dict:
                 star_rating = 4
             elif "expert panel" in normalized:
                 star_rating = 3
-            elif "multiple submitters" in normalized and "no conflicts" in normalized:
+            elif (
+                "multiple submitters" in normalized
+                and "no conflicts" in normalized
+            ):
                 star_rating = 2
-            elif "criteria provided" in normalized and "single submitter" in normalized:
+            elif (
+                "criteria provided" in normalized
+                and "single submitter" in normalized
+            ):
                 star_rating = 1
-            elif "no assertion criteria provided" in normalized or "no classification provided" in normalized:
+            elif (
+                "no assertion criteria provided" in normalized
+                or "no classification provided" in normalized
+            ):
                 star_rating = 0
             else:
                 # Unknown / new textual form — set to None (caller can treat as unknown)
@@ -100,16 +116,16 @@ def extract_consensus_and_stars(esummary: dict) -> dict:
     return {
         "consensus_classification": consensus_classification,
         "review_status_text": review_status_text,
-        "star_rating": star_rating
+        "star_rating": star_rating,
     }
+
 
 # Main script logic
 
 if __name__ == "__main__":
-    
     # Input HGVS:
 
-    hgvs_input = "NM_001377265.1:c.841G>T" 
+    hgvs_input = "NM_001377265.1:c.841G>T"
 
     # Find ClinVar UIDs for the HGVS
     try:
@@ -117,7 +133,9 @@ if __name__ == "__main__":
         uids = find_clinvar_uids_for_hgvs(hgvs_input)
     except Exception as exc:
         # If the HTTP request or parsing fails, print an error and exit
-        print(f"ERROR: Failed to search ClinVar for HGVS '{hgvs_input}': {exc}")
+        print(
+            f"ERROR: Failed to search ClinVar for HGVS '{hgvs_input}': {exc}"
+        )
         raise
 
     # Delay for NCBI rate limiting
@@ -129,15 +147,26 @@ if __name__ == "__main__":
         print("No ClinVar UID found for that HGVS.")
         # Still write an empty CSV row to indicate no result (optional)
         with open("clinvar_result.csv", "w", newline="") as fh:
-            writer = csv.DictWriter(fh, fieldnames=["hgvs", "clinvar_uid", "consensus_classification", "review_status_text", "star_rating"])
+            writer = csv.DictWriter(
+                fh,
+                fieldnames=[
+                    "hgvs",
+                    "clinvar_uid",
+                    "consensus_classification",
+                    "review_status_text",
+                    "star_rating",
+                ],
+            )
             writer.writeheader()
-            writer.writerow({
-                "hgvs": hgvs_input,
-                "clinvar_uid": None,
-                "consensus_classification": None,
-                "review_status_text": None,
-                "star_rating": None
-            })
+            writer.writerow(
+                {
+                    "hgvs": hgvs_input,
+                    "clinvar_uid": None,
+                    "consensus_classification": None,
+                    "review_status_text": None,
+                    "star_rating": None,
+                }
+            )
         # Exit the script (nothing else to fetch)
         raise SystemExit(0)
     else:
@@ -151,7 +180,9 @@ if __name__ == "__main__":
         esummary = fetch_esummary_for_uid(clinvar_uid)
     except Exception as exc:
         # If fetching fails
-        print(f"ERROR: Failed to fetch esummary for ClinVar UID {clinvar_uid}: {exc}")
+        print(
+            f"ERROR: Failed to fetch esummary for ClinVar UID {clinvar_uid}: {exc}"
+        )
         raise
 
     # Delay for NCBI rate limiting
@@ -165,7 +196,9 @@ if __name__ == "__main__":
 
     # Print extracted values for user
     print("\nExtracted fields:")
-    print(f"  consensus_classification: {extracted['consensus_classification']}")
+    print(
+        f"  consensus_classification: {extracted['consensus_classification']}"
+    )
     print(f"  review_status_text:       {extracted['review_status_text']}")
     print(f"  star_rating (0-4):        {extracted['star_rating']}")
 
@@ -173,18 +206,28 @@ if __name__ == "__main__":
     out_csv_path = "clinvar_hgvs_summary.csv"
     with open(out_csv_path, "w", newline="") as fh:
         # Define CSV column order
-        fieldnames = ["hgvs", "clinvar_uid", "consensus_classification", "review_status_text", "star_rating"]
+        fieldnames = [
+            "hgvs",
+            "clinvar_uid",
+            "consensus_classification",
+            "review_status_text",
+            "star_rating",
+        ]
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
         # Write header row
         writer.writeheader()
         # Write a single row with desired fields
-        writer.writerow({
-            "hgvs": hgvs_input,
-            "clinvar_uid": clinvar_uid,
-            "consensus_classification": extracted["consensus_classification"],
-            "review_status_text": extracted["review_status_text"],
-            "star_rating": extracted["star_rating"]
-        })
+        writer.writerow(
+            {
+                "hgvs": hgvs_input,
+                "clinvar_uid": clinvar_uid,
+                "consensus_classification": extracted[
+                    "consensus_classification"
+                ],
+                "review_status_text": extracted["review_status_text"],
+                "star_rating": extracted["star_rating"],
+            }
+        )
 
     # Final message
     print(f"\nDone — summary written to {out_csv_path}")
