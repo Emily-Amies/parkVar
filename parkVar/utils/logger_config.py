@@ -3,10 +3,12 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 
-def setup_logger(name,
-                 level = 10,
-                 maxBytes = 500000,
-                 backupCount = 2):
+def setup_logger(
+    name,
+    level=10,
+    maxBytes=500000,
+    backupCount=2
+):
     '''
     Creates and congifures a logger.
     Formats output and sets level (default = INFO).
@@ -68,9 +70,9 @@ def setup_logger(name,
     logger.addHandler(stream_handler)
 
     # Add file handler
-    file_handler = RotatingFileHandler(filename = log_file,
-                                       maxBytes = maxBytes,  # 500 KB
-                                       backupCount = backupCount)
+    file_handler = RotatingFileHandler(filename=log_file,
+                                       maxBytes=maxBytes,  # 500 KB
+                                       backupCount=backupCount)
     file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
