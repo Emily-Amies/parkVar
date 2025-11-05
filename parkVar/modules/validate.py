@@ -122,6 +122,9 @@ def validate_variant(variant_csv_path: str) -> pd.DataFrame:
     # Rate limit: 4 requests per second (delay = 1/4 = 0.25 seconds)
     min_interval = 0.25
 
+    # Loop over each row of variant df, construct variant description from the
+    # relevant columns, call the variant validator API, and store the g_hgvs in
+    # a new column
     for index, row in variant_df.iterrows():
         variant_desc = (
             f"{row['#CHROM']}-{row['POS']}-{row['REF']}-{row['ALT']}"
