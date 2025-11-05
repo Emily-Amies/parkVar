@@ -5,6 +5,7 @@ import requests
 
 from parkVar.utils.logger_config import logger
 
+
 # Although variant_description is the only parameter currently being used,
 # with the other params being left as default when the function is called,
 # the other params have been included to allow for future flexibility
@@ -151,10 +152,12 @@ def validate_variant(variant_csv_path: str) -> pd.DataFrame:
     logger.info("Variant validation complete.")
     return variant_df
 
+
 def main():
     # Example usage
     validated_df = validate_variant("/home/greg/Downloads/Patient1.csv")
     validated_df.to_csv("output.csv")
+
 
 if __name__ == "__main__":
     main()
