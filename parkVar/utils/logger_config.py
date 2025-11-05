@@ -2,21 +2,22 @@ import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-def setup_logger(name, 
+
+def setup_logger(name,
                  level = 10,
                  maxBytes = 500000,
                  backupCount = 2):
     '''
-    Creates and congifures a logger. 
+    Creates and congifures a logger.
     Formats output and sets level (default = INFO).
     Writes to stderr and a rotating log file.
 
     Parameters
     -----------
-    name: str 
+    name: str
         Name for the logger
-    level: int, optional 
-        Minimum level of output. 
+    level: int, optional
+        Minimum level of output.
             50 = CRITICAL
             40 = ERROR
             30 = WARNING
@@ -25,7 +26,7 @@ def setup_logger(name,
             0  = NOTSET
     maxBytes: int, optional
         Maximum file size for rotating file.
-    backupCount: int, optional 
+    backupCount: int, optional
         Maximum number of backup log files.
 
     Returns
@@ -41,23 +42,25 @@ def setup_logger(name,
         raise TypeError('name must be a string')
 
     if level not in valid_levels:
-        raise ValueError(f'level must be one of {sorted(valid_levels)}, got {level}')
+        raise ValueError(
+            f'level must be one of {sorted(valid_levels)}, got {level}'
+        )
 
     if not isinstance(maxBytes, int) or maxBytes <= 0:
         raise ValueError('maxBytes must be a positive integer')
 
     if not isinstance(backupCount, int) or backupCount < 0:
         raise ValueError('backupCount must be a non-negative integer')
-    
+
     # Path to the logs directory
     log_dir = str(Path(__file__).resolve().parent.parent.parent) + '/logs/'
     log_file = f'{log_dir}/{name}.log'
-    
+
     formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 
     logger = logging.getLogger(name)
     logger.setLevel(level)
-    
+
     # Add stream handler
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(level)
