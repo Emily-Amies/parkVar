@@ -166,7 +166,7 @@ def validate_variants(
         None: The function updates the DataFrame and writes the results to the
         specified output CSV file.
     """
-    logger.info("Reading in variants from CSV...")
+    logger.info(f"Reading in variants from {input_csv_path}")
     variant_df = pd.read_csv(input_csv_path)
     variant_df["genome_build"] = GENOME_BUILD
 
@@ -258,8 +258,7 @@ def validate_variants(
 
     variant_df.to_csv(output_csv_path, index=False)
     logger.info(
-        "Variant validation complete. Validated variants CSV saved to "
-        f"{output_csv_path}."
+        f"Variant validation complete. Output saved to {output_csv_path}."
     )
 
 
