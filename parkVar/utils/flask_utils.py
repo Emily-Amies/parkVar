@@ -68,11 +68,3 @@ def load_uploaded_filenames(uploaded_files):
 
 def save_uploaded_filenames(uploaded_files, filenames: list):
     uploaded_files.write_text("\n".join(sorted(filenames)), encoding="utf-8")
-
-def refresh_session(data_dir):
-    for item in data_dir.glob('*'):
-        try:
-            item.unlink()
-        except Exception as e:
-            logger.error(f'Failed to delete {item}: {e}')
-    return redirect(url_for('/'))
