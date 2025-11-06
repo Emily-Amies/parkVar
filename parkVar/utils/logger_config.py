@@ -9,7 +9,7 @@ def setup_logger(
     maxBytes=500000,
     backupCount=2
 ):
-    '''
+    """
     Creates and congifures a logger.
     Formats output and sets level (default = INFO).
     Writes to stderr and a rotating log file.

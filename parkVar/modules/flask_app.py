@@ -41,6 +41,14 @@ def upload():
         logger.error(f"Failed to read CSV: {e}")
         return f"Failed to read CSV: {e}", 400
 
+    # Add patient ID column
+
+    # Add patient ID as first column
+    patient_id = Path(filename).stem # strips .csv
+    if 'Patient_ID' in df.columns:
+        df = df.drop(columns=['Patient_ID'])
+    df.insert(0, 'Patient_ID', patient_id)
+
     ##########################################################################
     # Save data to temporary data file
     ##########################################################################
