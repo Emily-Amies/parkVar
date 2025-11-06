@@ -21,10 +21,16 @@ UPLOAD_PAGE = """
 {% endwith %}
 
 <h1>Upload CSV</h1>
+
 <form method='POST' enctype='multipart/form-data'>
   <input type='file' name='file' accept='.csv' required>
   <button type='submit'>Upload</button>
 </form>
+
+<form action='/refresh' method='post' style='margin-top: 1rem;'>
+  <button type='submit'>Refresh session</button>
+</form>
+
 """
 
 
