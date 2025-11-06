@@ -2,6 +2,7 @@
 requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
+
 [project]
 name = "parkVar"
 description = "A tool to annotate variants from a Parkinson's NGS Panel"
@@ -10,12 +11,16 @@ readme = "README.md"
 requires-python = ">=3.13"
 dynamic = ["version", "dependencies"]
 
+
 [tool.setuptools.packages.find]
 where = ['.']
+
 
 [tool.setuptools.dynamic]
 version = { attr = 'parkVar.__version__' }
 dependencies = { file = ['requirements.txt'] }
+
+
 
 
 [tool.ruff]
@@ -29,13 +34,16 @@ indent-width = 4
 # https://peps.python.org/pep-0008/#maximum-line-length)
 line-length = 79
 
+
 # Disable autofix by default (users must manually apply fixes)
 fix = false
+
 
 [tool.ruff.lint]
 # Select specific rules to enforce (errors (E), Pyflakes (F) , warnings (W),
 # and imports warnings (I) - see https://www.flake8rules.com/ for details
 select = ["E", "F", "W", "I"]
+
 
 [tool.ruff.format]
 # Use 4-space indentation (PEP8 standard -
