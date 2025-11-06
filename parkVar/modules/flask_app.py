@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string, flash
+from flask import Flask, request, render_template_string, flash, redirect, url_for
 import pandas as pd
 import io  # Needed for StringIO - used to make a file-like object in memory
 from parkVar.utils import flask_utils
@@ -88,6 +88,17 @@ def upload():
 
     # Render the CSV as an HTML table using the template string
     return flask_utils.create_table(df)
+
+
+@app.route('/refresh', methods=['POST'])
+def refresh_session():
+    data_dir = Path(__file__).resolve().parent.parent.parent / 'data'
+    for item in data_dir.glob('*'):
+        try:
+            item.unlink()
+        except Exception as e:
+            logger.error(f'Failed to delete {item}: {e}')
+    return redirect(url_for('upload'))
 
 @app.route('/annotate', methods=['POST'])
 def annotate_data():
