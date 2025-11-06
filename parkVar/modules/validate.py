@@ -1,5 +1,5 @@
 import time
-
+import sys
 import pandas as pd
 import requests
 
@@ -125,7 +125,11 @@ def _update_df_with_vv_values(
                 f"Variant {variant_desc} has no associated {key} value in VV."
             )
 
-def validate_variant(variant_csv_path: str) -> pd.DataFrame:
+
+def validate_variant(
+    input_csv_path: str,
+    output_csv_path: str
+) -> pd.DataFrame:
     """
     Reads a CSV file containing genomic variants, validates each variant using
     the Variant Validator API, and updates the DataFrame with additional
@@ -171,7 +175,7 @@ def validate_variant(variant_csv_path: str) -> pd.DataFrame:
               variant.
     """
     logger.info("Reading in variants from CSV...")
-    variant_df = pd.read_csv(variant_csv_path)
+    variant_df = pd.read_csv(input_csv_path)
     variant_df["genome_build"] = GENOME_BUILD
 
     vv_values = {
@@ -260,15 +264,12 @@ def validate_variant(variant_csv_path: str) -> pd.DataFrame:
         if elapsed_time < min_interval:
             time.sleep(min_interval - elapsed_time)
 
-    logger.info("Variant validation complete.")
-    return variant_df
-
-
-def main():
-    # Example usage
-    validated_df = validate_variant("/home/greg/Downloads/Patient1.csv")
-    validated_df.to_csv("validated_variants.csv")
+    logger.info(
+        "Variant validation complete. Validated variants saved to "
+        f"{output_csv_path}."
+    )
+    variant_df.to_csv(output_csv_path, index=False)
 
 
 if __name__ == "__main__":
-    main()
+    validate_variant(sys.argv[1], sys.argv[2])
