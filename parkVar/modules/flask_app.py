@@ -17,7 +17,8 @@ def upload():
     # GET - Show the form
     if request.method == "GET":
         # Render the HTML template from a string rather than a file
-        return render_template_string(flask_utils.UPLOAD_PAGE)
+        return render_template_string(flask_utils.UPLOAD_TEMPLATE)
+
 
     ##########################################################################
     # Load in files
@@ -114,9 +115,72 @@ def annotate_data():
         logger.error(f'Failed to read anno_data.csv: {e}')
         return f'Failed to read anno_data.csv: {e}', 500
 
-    # for now, just confirm we loaded it successfully
     logger.info(f'Loaded annotated data with {len(df)} rows')
-    return flask_utils.create_table(df)
+
+    # build HTML table
+    table_html = flask_utils.create_table(df)
+
+    # get unique patient IDs for checkboxes
+    if 'Patient_ID' in df.columns:
+        patient_ids = sorted(df['Patient_ID'].astype(str).dropna().unique().tolist())
+    else:
+        logger.error('Patient_ID column missing from annotated data')
+        return 'Patient_ID column missing from annotated data', 400
+
+    # return a page with table + checkbox filter form
+    return flask_utils.show_checkboxes(table_html, patient_ids)
+
+@app.route('/filter', methods=['POST'])
+def filter_data():
+    data_dir = Path(__file__).resolve().parent.parent.parent / 'data'
+    anno_path = data_dir / 'anno_data.csv'
+    filtered_path = data_dir / 'filtered_data.csv'
+
+    # decide which file we are filtering (anno_data.csv should exist at this point)
+    if not anno_path.exists():
+        logger.error('Annotated file not found when filtering')
+        return 'Annotated file not found. Run annotation first.', 400
+
+    try:
+        df = pd.read_csv(anno_path)
+    except Exception as e:
+        logger.error(f'Failed to read anno_data.csv during filtering: {e}')
+        return f'Failed to read anno_data.csv: {e}', 500
+
+    if 'Patient_ID' not in df.columns:
+        logger.error('Patient_ID column missing when filtering')
+        return 'Patient_ID column missing from data', 400
+
+    # list of selected patient IDs from the form
+    selected_ids = request.form.getlist('patient_id')
+
+    # apply filter
+    if selected_ids:
+        filtered_df = df[df['Patient_ID'].astype(str).isin(selected_ids)]
+        logger.info(f'Filter applied to Patient_ID(s): {selected_ids}')
+        applied_text = f'Filtered to: {", ".join(selected_ids)}'
+    else:
+        # no boxes ticked = show everything
+        filtered_df = df.copy()
+        logger.info('No filter applied (no Patient_ID selected)')
+        applied_text = 'No filter selected. Showing all rows.'
+
+    # write filtered CSV
+    filtered_df.to_csv(filtered_path, index=False)
+
+    # rebuild checkbox values so the page can re-render them
+    patient_ids = sorted(df['Patient_ID'].astype(str).dropna().unique().tolist())
+
+    # Build the table HTML for the filtered frame
+    table_html = flask_utils.create_table(filtered_df)
+
+    return render_template_string(
+        flask_utils.ANNO_TEMPLATE,
+        applied_text=applied_text,
+        table=table_html,
+        patient_ids=patient_ids,
+        selected_ids=selected_ids
+    )
 
 
 if __name__ == "__main__":
