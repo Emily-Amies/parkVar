@@ -256,11 +256,11 @@ def validate_variants(
         if elapsed_time < min_interval:
             time.sleep(min_interval - elapsed_time)
 
+    variant_df.to_csv(output_csv_path, index=False)
     logger.info(
-        "Variant validation complete. Validated variants saved to "
+        "Variant validation complete. Validated variants CSV saved to "
         f"{output_csv_path}."
     )
-    variant_df.to_csv(output_csv_path, index=False)
 
 
 if __name__ == "__main__":
