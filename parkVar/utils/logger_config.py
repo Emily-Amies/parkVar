@@ -3,7 +3,12 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 
-def setup_logger(name, level=10, maxBytes=500000, backupCount=2):
+def setup_logger(
+    name,
+    level=10,
+    maxBytes=500000,
+    backupCount=2
+):
     """
     Creates and congifures a logger.
     Formats output and sets level (default = INFO).
@@ -39,19 +44,21 @@ def setup_logger(name, level=10, maxBytes=500000, backupCount=2):
         raise TypeError("name must be a string")
 
     if level not in valid_levels:
-        raise ValueError(f"level must be one of {sorted(valid_levels)}, got {level}")
+        raise ValueError(
+            f'level must be one of {sorted(valid_levels)}, got {level}'
+        )
 
     if not isinstance(maxBytes, int) or maxBytes <= 0:
         raise ValueError("maxBytes must be a positive integer")
 
     if not isinstance(backupCount, int) or backupCount < 0:
-        raise ValueError("backupCount must be a non-negative integer")
+        raise ValueError('backupCount must be a non-negative integer')
 
     # Path to the logs directory
-    log_dir = str(Path(__file__).resolve().parent.parent.parent) + "/logs/"
-    log_file = f"{log_dir}/{name}.log"
+    log_dir = str(Path(__file__).resolve().parent.parent.parent) + '/logs/'
+    log_file = f'{log_dir}/{name}.log'
 
-    formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 
     logger = logging.getLogger(name)
     logger.setLevel(level)
@@ -63,11 +70,9 @@ def setup_logger(name, level=10, maxBytes=500000, backupCount=2):
     logger.addHandler(stream_handler)
 
     # Add file handler
-    file_handler = RotatingFileHandler(
-        filename=log_file,
-        maxBytes=maxBytes,  # 500 KB
-        backupCount=backupCount,
-    )
+    file_handler = RotatingFileHandler(filename=log_file,
+                                       maxBytes=maxBytes,  # 500 KB
+                                       backupCount=backupCount)
     file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
