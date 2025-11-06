@@ -126,20 +126,20 @@ def _update_df_with_vv_values(
             )
 
 
-def validate_variant(
+def validate_variants(
     input_csv_path: str,
     output_csv_path: str
-) -> pd.DataFrame:
+) -> None:
     """
     Reads a CSV file containing genomic variants, validates each variant using
-    the Variant Validator API, and updates the DataFrame with additional
+    the Variant Validator API, and updates the CSV with additional
     information derived from Variant Validator.
 
-    The function adds the following columns to the DataFrame:
+    The function adds the following columns to the CSV:
         - 'genome_build': The genome build used for validation (e.g., 'GRCh38')
         - 'g_hgvs': Genomic HGVS notation for each variant.
         - 't_hgvs': Transcript HGVS notation for each variant using the MANE
-                Select transcript.
+          Select transcript.
         - 'hgnc_id': HGNC ID associated with the gene for each variant.
         - 'symbol': Gene symbol associated with the variant.
         - 'p_hgvs_tlc': Protein HGVS notation (three-letter code) for each
@@ -153,26 +153,18 @@ def validate_variant(
     the time taken for each request and adding a delay if necessary.
 
     Args:
-        variant_csv_path (str): Path to the CSV file containing variant data.
-        The CSV file must have the following columns:
-            - '#CHROM': Chromosome identifier
-            - 'POS': Position of the variant
-            - 'REF': Reference allele
-            - 'ALT': Alternate allele
+        input_csv_path (str): Path to the input CSV file containing variant
+            data. The CSV file must have the following columns:
+            - '#CHROM': Chromosome identifier.
+            - 'POS': Position of the variant.
+            - 'REF': Reference allele.
+            - 'ALT': Alternate allele.
+        output_csv_path (str): Path to save the updated CSV file with validated
+            variant information.
 
     Returns:
-        pd.DataFrame: The updated DataFrame with the following columns:
-            - '#CHROM': Chromosome identifier
-            - 'POS': Position of the variant
-            - 'REF': Reference allele
-            - 'ALT': Alternate allele
-            - 'genome_build': Genome build used for validation (e.g., 'GRCh38')
-            - 'g_hgvs': Genomic HGVS notation for each variant.
-            - 't_hgvs': Transcript HGVS notation for each variant.
-            - 'hgnc_id': HGNC ID associated with the gene for each variant.
-            - 'symbol': Gene symbol associated with the variant.
-            - 'p_hgvs_tlc': Protein HGVS notation (three-letter code) for each
-              variant.
+        None: The function updates the DataFrame and writes the results to the
+        specified output CSV file.
     """
     logger.info("Reading in variants from CSV...")
     variant_df = pd.read_csv(input_csv_path)
@@ -272,4 +264,4 @@ def validate_variant(
 
 
 if __name__ == "__main__":
-    validate_variant(sys.argv[1], sys.argv[2])
+    validate_variants(sys.argv[1], sys.argv[2])
