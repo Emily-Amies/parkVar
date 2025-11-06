@@ -31,6 +31,10 @@ UPLOAD_PAGE = """
   <button type='submit'>Refresh session</button>
 </form>
 
+<form action='/annotate' method='post' style='margin-top: 1rem;'>
+  <button type='submit'>Annotate data</button>
+</form>
+
 """
 
 

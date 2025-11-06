@@ -100,6 +100,24 @@ def refresh_session():
             logger.error(f'Failed to delete {item}: {e}')
     return redirect(url_for('upload'))
 
+@app.route('/annotate', methods=['POST'])
+def annotate_data():
+    data_dir = Path(__file__).resolve().parent.parent.parent / 'data'
+    anno_path = data_dir / 'anno_data.csv'
+
+    if not anno_path.exists():
+        return 'Annotated file not found. Did the annotation step run?', 400
+
+    try:
+        df = pd.read_csv(anno_path)
+    except Exception as e:
+        logger.error(f'Failed to read anno_data.csv: {e}')
+        return f'Failed to read anno_data.csv: {e}', 500
+
+    # for now, just confirm we loaded it successfully
+    logger.info(f'Loaded annotated data with {len(df)} rows')
+    return flask_utils.create_table(df)
+
 
 if __name__ == "__main__":
     app.debug = True
