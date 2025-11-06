@@ -1,8 +1,8 @@
-import requests
-import json
-import time
 import csv
+import time
 from typing import Optional
+
+import requests
 
 # Defining constants etc
 
@@ -23,7 +23,18 @@ REVIEW_STATUS_TO_STARS = {
 
 def find_clinvar_uids_for_hgvs(hgvs: str) -> list:
     """
-    Query ClinVar with an HGVS string and return list of associated UIDs.
+    Query ClinVar with an HGVS string and return associated UIDs.
+
+    Parameters
+    ----------
+    hgvs : str
+        HGVS expression to search for in the ClinVar database.
+
+    Returns
+    -------
+    list
+        List of UID strings found for the provided HGVS. May be empty if no
+        matches.
     """
     # Define UID search url
     url = f"{EUTILS_BASE}/esearch.fcgi"
@@ -43,7 +54,18 @@ def find_clinvar_uids_for_hgvs(hgvs: str) -> list:
 
 def fetch_esummary_for_uid(uid: str) -> dict:
     """
-    Generate ClinVar esummary for a given UID and return the parsed JSON report.
+    Fetch ClinVar esummary JSON for a given UID.
+
+    Parameters
+    ----------
+    uid : str
+        ClinVar UID to fetch the esummary for.
+
+    Returns
+    -------
+    dict
+        Parsed esummary dictionary corresponding to the requested UID. Empty
+        dict if the UID is not present in the returned result payload.
     """
     # Define esummary URL
     url = f"{EUTILS_BASE}/esummary.fcgi"
@@ -63,10 +85,25 @@ def fetch_esummary_for_uid(uid: str) -> dict:
 
 def extract_consensus_and_stars(esummary: dict) -> dict:
     """
-    From ClinVar esummary JSON extract:
-      - consensus_classification (germline_classification.description)
-      - review_status_text  (germline_classification.review_status)
-      - star_rating (integer 0-4 deduced from review_status_text)
+    Extract consensus classification, review status text and star rating.
+
+    Parameters
+    ----------
+    esummary : dict
+        ClinVar esummary dictionary (as returned by fetch_esummary_for_uid).
+
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+        - consensus_classification (str or None): textual consensus
+        classification
+          (e.g., "Pathogenic", "Likely pathogenic", "Conflicting
+          interpretations of pathogenicity").
+        - review_status_text (str or None): raw review status text from the
+        esummary.
+        - star_rating (int or None): deduced star rating (0-4) where available,
+          otherwise None.
     """
     # germline_classification dict from esummary
     clin_sig = (
@@ -74,7 +111,8 @@ def extract_consensus_and_stars(esummary: dict) -> dict:
         if isinstance(esummary, dict)
         else {}
     )
-    # Textual consensus classification (e.g., "Pathogenic", "Likely pathogenic", "Conflicting interpretations of pathogenicity")
+    # Textual consensus classification (e.g., "Pathogenic", "Likely
+    # pathogenic", "Conflicting interpretations of pathogenicity")
     consensus_classification = clin_sig.get("description")
     # The review_status text
     review_status_text = clin_sig.get("review_status")
@@ -87,8 +125,9 @@ def extract_consensus_and_stars(esummary: dict) -> dict:
         if normalized in REVIEW_STATUS_TO_STARS:
             star_rating = REVIEW_STATUS_TO_STARS[normalized]
         else:
-            # Some esummary review_status strings include commas or slight variations;
-            # attempt a best-effort match using substring checks in order of precedence.
+            # Some esummary review_status strings include commas or slight
+            #  variations; attempt a best-effort match using substring
+            # checks in order of precedence.
             if "practice guideline" in normalized:
                 star_rating = 4
             elif "expert panel" in normalized:
@@ -109,7 +148,8 @@ def extract_consensus_and_stars(esummary: dict) -> dict:
             ):
                 star_rating = 0
             else:
-                # Unknown / new textual form — set to None (caller can treat as unknown)
+                # Unknown / new textual form — set to None (caller can treat as
+                #  unknown)
                 star_rating = None
 
     # Return a small dict containing the extracted fields
@@ -129,12 +169,14 @@ if __name__ == "__main__":
 
     # Find ClinVar UIDs for the HGVS
     try:
-        # Call helper that wraps esearch; returns list of UID strings (may be empty)
+        # Call helper that wraps esearch; returns list of UID strings (may be
+        #  empty)
         uids = find_clinvar_uids_for_hgvs(hgvs_input)
     except Exception as exc:
         # If the HTTP request or parsing fails, print an error and exit
         print(
-            f"ERROR: Failed to search ClinVar for HGVS '{hgvs_input}': {exc}"
+            f"ERROR: Failed to search "
+            f"ClinVar for HGVS '{hgvs_input}': {exc}"
         )
         raise
 
@@ -181,7 +223,7 @@ if __name__ == "__main__":
     except Exception as exc:
         # If fetching fails
         print(
-            f"ERROR: Failed to fetch esummary for ClinVar UID {clinvar_uid}: {exc}"
+            f"ERROR: Failed to fetch esummary for UID {clinvar_uid}: {exc}"
         )
         raise
 
