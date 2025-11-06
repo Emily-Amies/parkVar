@@ -13,7 +13,7 @@ GENOME_BUILD = "GRCh38"
 # Although variant_desc is the only parameter currently being used,
 # with the other params being left as default when the function is called,
 # the other params have been included to allow for future flexibility
-def _call_variant_validator(
+def call_variant_validator(
     variant_desc: str,
     genome_build: str = "GRCh38",
     transcript_model: str = "refseq",
@@ -83,7 +83,7 @@ def _call_variant_validator(
         raise e
 
 
-def _update_df_with_vv_values(
+def update_df_with_vv_values(
     df: pd.DataFrame,
     index: int,
     variant_desc: str,
@@ -195,7 +195,7 @@ def validate_variants(
         )
 
         start_time = time.time()
-        vv_response = _call_variant_validator(
+        vv_response = call_variant_validator(
             variant_desc=variant_desc, genome_build=GENOME_BUILD
         )[variant_desc][variant_desc]
 
@@ -227,7 +227,7 @@ def validate_variants(
                     "p_hgvs_tlc"]
 
                 # Insert retrieved values into the dataframe
-                _update_df_with_vv_values(
+                update_df_with_vv_values(
                     df=variant_df,
                     index=index,
                     variant_desc=variant_desc,
