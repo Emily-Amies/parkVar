@@ -106,11 +106,14 @@ def extract_consensus_and_stars(esummary: dict) -> dict:
           otherwise None.
     """
     # germline_classification dict from esummary
-    clin_sig = (
-        esummary.get("germline_classification", {})
-        if isinstance(esummary, dict)
-        else {}
-    )
+    # Fetch 'germline_classification' field; if missing
+    # for legacy submissions, fall back to 'clinical_significance'.
+    clin_sig = {}
+    if isinstance(esummary, dict):
+        clin_sig = esummary.get("germline_classification")
+        if not clin_sig:
+            clin_sig = esummary.get("clinical_significance", {})
+
     # Textual consensus classification (e.g., "Pathogenic", "Likely
     # pathogenic", "Conflicting interpretations of pathogenicity")
     consensus_classification = clin_sig.get("description")
