@@ -83,9 +83,60 @@ def fetch_esummary_for_uid(uid: str) -> dict:
     return esum_for_uid
 
 
+def extract_disease_from_trait_set(clin_sig: dict) -> dict:
+    """
+    Extract disease name and OMIM ID from ClinVar trait_set fields.
+
+    Parameters
+    ----------
+    clin_sig : dict
+        The classification from a ClinVar esummary (e.g.
+        "germline_classification" or legacy "clinical_significance").
+        This should contain a "trait_set" or "traits" field.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+        - disease_name (str or None): name of the first disease
+          (from "trait_name" or "name"), or None if not present.
+        - disease_mim (str or None): OMIM ID (from "trait_xrefs"
+          or "xrefs"), or None if not present.
+
+    Notes
+    -----
+    Currently will only pull the first listed clinical indication for
+    these fields.
+    """
+    disease_name = None
+    disease_mim = None
+
+    if not isinstance(clin_sig, dict):
+        return {"disease_name": None, "disease_mim": None}
+
+    trait_set = clin_sig.get("trait_set") or clin_sig.get("traits") or []
+    if isinstance(trait_set, list) and trait_set:
+        first_trait = trait_set[0] if isinstance(trait_set[0], dict) else {}
+        # "disease name" could be in trait_name or name
+        disease_name = first_trait.get("trait_name") or first_trait.get("name")
+        # "xrefs" could be either in trait_xrefs or xrefs
+        xrefs = first_trait.get("trait_xrefs") or first_trait.get("xrefs") or [
+        ]
+        for xref in xrefs:
+            if not isinstance(xref, dict):
+                continue
+            db_source = (xref.get("db_source") or xref.get("db") or "").upper()
+            if db_source == "OMIM":
+                disease_mim = xref.get("db_id") or xref.get("id")
+                break
+
+    return {"disease_name": disease_name, "disease_mim": disease_mim}
+
+
 def extract_consensus_and_stars(esummary: dict) -> dict:
     """
-    Extract consensus classification, review status text and star rating.
+    Extract consensus classification, review status, star rating,
+    disease name and MIM ID.
 
     Parameters
     ----------
@@ -96,14 +147,12 @@ def extract_consensus_and_stars(esummary: dict) -> dict:
     -------
     dict
         Dictionary with keys:
-        - consensus_classification (str or None): textual consensus
-        classification
-          (e.g., "Pathogenic", "Likely pathogenic", "Conflicting
-          interpretations of pathogenicity").
-        - review_status_text (str or None): raw review status text from the
-        esummary.
-        - star_rating (int or None): deduced star rating (0-4) where available,
-          otherwise None.
+        - consensus_classification (str or None):
+        textual consensus classification
+        - review_status_text (str or None): raw review status text
+        - star_rating (int or None): deduced star rating (0-4)
+        - disease_name (str or None): name of associated disease/condition
+        - disease_mim (str or None): MIM ID of associated disease if available
     """
     # germline_classification dict from esummary
     # Fetch 'germline_classification' field; if missing
@@ -151,15 +200,21 @@ def extract_consensus_and_stars(esummary: dict) -> dict:
             ):
                 star_rating = 0
             else:
-                # Unknown / new textual form — set to None (caller can treat as
-                #  unknown)
+                # Unknown review status text, then:
                 star_rating = None
 
-    # Return a small dict containing the extracted fields
+    # Extract disease information from trait_set using helper
+    disease_info = extract_disease_from_trait_set(clin_sig)
+    disease_name = disease_info.get("disease_name")
+    disease_mim = disease_info.get("disease_mim")
+
+    # Return dict with all extracted fields
     return {
         "consensus_classification": consensus_classification,
         "review_status_text": review_status_text,
         "star_rating": star_rating,
+        "disease_name": disease_name,
+        "disease_mim": disease_mim,
     }
 
 
@@ -203,16 +258,15 @@ if __name__ == "__main__":
                 ],
             )
             writer.writeheader()
-            writer.writerow(
-                {
-                    "hgvs": hgvs_input,
-                    "clinvar_uid": None,
-                    "consensus_classification": None,
-                    "review_status_text": None,
-                    "star_rating": None,
-                }
-            )
-        # Exit the script (nothing else to fetch)
+            writer.writerow({
+                "hgvs": hgvs_input,
+                "clinvar_uid": None,
+                "consensus_classification": None,
+                "review_status_text": None,
+                "star_rating": None,
+                "disease_name": None,
+                "disease_mim": None
+            })
         raise SystemExit(0)
     else:
         # Use the top UID if multiple found (need to change later?)
@@ -246,6 +300,8 @@ if __name__ == "__main__":
     )
     print(f"  review_status_text:       {extracted['review_status_text']}")
     print(f"  star_rating (0-4):        {extracted['star_rating']}")
+    print(f"  disease_name:             {extracted['disease_name']}")
+    print(f"  disease_mim:              {extracted['disease_mim']}")
 
     # Write desired fields to CSV
     out_csv_path = "clinvar_hgvs_summary.csv"
@@ -257,6 +313,8 @@ if __name__ == "__main__":
             "consensus_classification",
             "review_status_text",
             "star_rating",
+            "disease_name",
+            "disease_mim",
         ]
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
         # Write header row
@@ -266,11 +324,12 @@ if __name__ == "__main__":
             {
                 "hgvs": hgvs_input,
                 "clinvar_uid": clinvar_uid,
-                "consensus_classification": extracted[
-                    "consensus_classification"
-                ],
+                "consensus_classification":
+                extracted["consensus_classification"],
                 "review_status_text": extracted["review_status_text"],
                 "star_rating": extracted["star_rating"],
+                "disease_name": extracted["disease_name"],
+                "disease_mim": extracted["disease_mim"],
             }
         )
 
