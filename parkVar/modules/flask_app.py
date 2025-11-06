@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string, flash, redirect, url_for
+from flask import Flask, request, render_template_string, flash
 import pandas as pd
 import io  # Needed for StringIO - used to make a file-like object in memory
 from parkVar.utils import flask_utils
@@ -89,16 +89,23 @@ def upload():
     # Render the CSV as an HTML table using the template string
     return flask_utils.create_table(df)
 
-
-@app.route('/refresh', methods=['POST'])
-def refresh_session():
+@app.route('/annotate', methods=['POST'])
+def annotate_data():
     data_dir = Path(__file__).resolve().parent.parent.parent / 'data'
-    for item in data_dir.glob('*'):
-        try:
-            item.unlink()
-        except Exception as e:
-            logger.error(f'Failed to delete {item}: {e}')
-    return redirect(url_for('upload'))
+    anno_path = data_dir / 'anno_data.csv'
+
+    if not anno_path.exists():
+        return 'Annotated file not found. Did the annotation step run?', 400
+
+    try:
+        df = pd.read_csv(anno_path)
+    except Exception as e:
+        logger.error(f'Failed to read anno_data.csv: {e}')
+        return f'Failed to read anno_data.csv: {e}', 500
+
+    # for now, just confirm we loaded it successfully
+    logger.info(f'Loaded annotated data with {len(df)} rows')
+    return flask_utils.create_table(df)
 
 
 if __name__ == "__main__":
