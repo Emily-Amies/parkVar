@@ -338,7 +338,6 @@ def validate_variants(
     for index, vv_response in vv_responses.items():
         vv_parsed_response = parse_vv_response(
             vv_response=vv_response,
-            vv_values=vv_values,
             index=index
         )
         update_df_with_parsed_vv_values(
