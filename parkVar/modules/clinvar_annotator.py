@@ -1,7 +1,8 @@
-import csv
 import time
+from pathlib import Path
 from typing import Optional
 
+import pandas as pd
 import requests
 
 # Defining constants etc
@@ -83,9 +84,60 @@ def fetch_esummary_for_uid(uid: str) -> dict:
     return esum_for_uid
 
 
+def extract_disease_from_trait_set(clin_sig: dict) -> dict:
+    """
+    Extract disease name and OMIM ID from ClinVar trait_set fields.
+
+    Parameters
+    ----------
+    clin_sig : dict
+        The classification from a ClinVar esummary (e.g.
+        "germline_classification" or legacy "clinical_significance").
+        This should contain a "trait_set" or "traits" field.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+        - disease_name (str or None): name of the first disease
+          (from "trait_name" or "name"), or None if not present.
+        - disease_mim (str or None): OMIM ID (from "trait_xrefs"
+          or "xrefs"), or None if not present.
+
+    Notes
+    -----
+    Currently will only pull the first listed clinical indication for
+    these fields.
+    """
+    disease_name = None
+    disease_mim = None
+
+    if not isinstance(clin_sig, dict):
+        return {"disease_name": None, "disease_mim": None}
+
+    trait_set = clin_sig.get("trait_set") or clin_sig.get("traits") or []
+    if isinstance(trait_set, list) and trait_set:
+        first_trait = trait_set[0] if isinstance(trait_set[0], dict) else {}
+        # "disease name" could be in trait_name or name
+        disease_name = first_trait.get("trait_name") or first_trait.get("name")
+        # "xrefs" could be either in trait_xrefs or xrefs
+        xrefs = first_trait.get("trait_xrefs") or first_trait.get("xrefs") or [
+        ]
+        for xref in xrefs:
+            if not isinstance(xref, dict):
+                continue
+            db_source = (xref.get("db_source") or xref.get("db") or "").upper()
+            if db_source == "OMIM":
+                disease_mim = xref.get("db_id") or xref.get("id")
+                break
+
+    return {"disease_name": disease_name, "disease_mim": disease_mim}
+
+
 def extract_consensus_and_stars(esummary: dict) -> dict:
     """
-    Extract consensus classification, review status text and star rating.
+    Extract consensus classification, review status, star rating,
+    disease name and MIM ID.
 
     Parameters
     ----------
@@ -96,24 +148,25 @@ def extract_consensus_and_stars(esummary: dict) -> dict:
     -------
     dict
         Dictionary with keys:
-        - consensus_classification (str or None): textual consensus
-        classification
-          (e.g., "Pathogenic", "Likely pathogenic", "Conflicting
-          interpretations of pathogenicity").
-        - review_status_text (str or None): raw review status text from the
-        esummary.
-        - star_rating (int or None): deduced star rating (0-4) where available,
-          otherwise None.
+        - classification (str or None):
+        textual consensus classification
+        - review_status_text (str or None): raw review status text
+        - star_rating (int or None): deduced star rating (0-4)
+        - disease_name (str or None): name of associated disease/condition
+        - disease_mim (str or None): MIM ID of associated disease if available
     """
     # germline_classification dict from esummary
-    clin_sig = (
-        esummary.get("germline_classification", {})
-        if isinstance(esummary, dict)
-        else {}
-    )
+    # Fetch 'germline_classification' field; if missing
+    # for legacy submissions, fall back to 'clinical_significance'.
+    clin_sig = {}
+    if isinstance(esummary, dict):
+        clin_sig = esummary.get("germline_classification")
+        if not clin_sig:
+            clin_sig = esummary.get("clinical_significance", {})
+
     # Textual consensus classification (e.g., "Pathogenic", "Likely
     # pathogenic", "Conflicting interpretations of pathogenicity")
-    consensus_classification = clin_sig.get("description")
+    classification = clin_sig.get("description")
     # The review_status text
     review_status_text = clin_sig.get("review_status")
     # Determine star rating from review_status_text
@@ -148,128 +201,116 @@ def extract_consensus_and_stars(esummary: dict) -> dict:
             ):
                 star_rating = 0
             else:
-                # Unknown / new textual form — set to None (caller can treat as
-                #  unknown)
+                # Unknown review status text, then:
                 star_rating = None
 
-    # Return a small dict containing the extracted fields
+    # Extract disease information from trait_set using helper
+    disease_info = extract_disease_from_trait_set(clin_sig)
+    disease_name = disease_info.get("disease_name")
+    disease_mim = disease_info.get("disease_mim")
+
+    # Return dict with all extracted fields
     return {
-        "consensus_classification": consensus_classification,
+        "classification": classification,
         "review_status_text": review_status_text,
         "star_rating": star_rating,
+        "disease_name": disease_name,
+        "disease_mim": disease_mim,
     }
 
 
 # Main script logic
 
+def process_variants_file(input_csv: Path) -> Path:
+    """
+    Process validated_variants.csv and annotate with ClinVar data.
+
+    Parameters
+    ----------
+    input_csv : Path
+        Path to input CSV containing variants with 't_hgvs' column
+
+    Returns
+    -------
+    Path
+        Path to output CSV with ClinVar annotations added
+    """
+    # Read input CSV into DataFrame
+    try:
+        df = pd.read_csv(input_csv)
+        if 't_hgvs' not in df.columns:
+            raise KeyError("Input CSV must contain 't_hgvs' column")
+    except Exception as e:
+        raise Exception(f"Failed to read input CSV: {e}")
+
+    if df.empty:
+        raise ValueError("No variants found in input file")
+
+    # Create new columns for ClinVar annotations
+    clinvar_cols = {
+        'clinvar_uid': None,
+        'classification': None,
+        'review_status_text': None,
+        'star_rating': None,
+        'disease_name': None,
+        'disease_mim': None
+    }
+    for col in clinvar_cols:
+        df[col] = None
+
+    # Process each variant
+    for idx, row in df.iterrows():
+        hgvs_input = row['t_hgvs']
+        print(f"\nProcessing variant: {hgvs_input}")
+
+        try:
+            uids = find_clinvar_uids_for_hgvs(hgvs_input)
+            time.sleep(NCBI_RATE_LIMIT_SLEEP)
+
+            if not uids:
+                print(f"No ClinVar UID found for {hgvs_input}")
+                continue
+
+            clinvar_uid = uids[0]
+            print(f"Found ClinVar UID(s): {uids} -> using {clinvar_uid}")
+
+            esummary = fetch_esummary_for_uid(clinvar_uid)
+            time.sleep(NCBI_RATE_LIMIT_SLEEP)
+
+            extracted = extract_consensus_and_stars(esummary)
+
+            # Update validated_variants dataframe with clinvar data
+            df.at[idx, 'clinvar_uid'] = clinvar_uid
+            df.at[idx, 'classification'] = extracted['classification']
+            df.at[idx, 'review_status_text'] = extracted['review_status_text']
+            df.at[idx, 'star_rating'] = extracted['star_rating']
+            df.at[idx, 'disease_name'] = extracted['disease_name']
+            df.at[idx, 'disease_mim'] = extracted['disease_mim']
+
+        except Exception as exc:
+            print(f"Error processing variant {hgvs_input}: {exc}")
+            continue
+
+    # Write appended dataframe to output CSV
+    output_csv = input_csv.parent / "anno_data.csv"
+    df.to_csv(output_csv, index=False)
+    print(f"\nDone — annotations written to {output_csv}")
+
+    return output_csv
+
+
+# copilot splurge for running internally
 if __name__ == "__main__":
-    # Input HGVS:
+    import sys
+    from pathlib import Path
 
-    hgvs_input = "NM_001377265.1:c.841G>T"
+    if len(sys.argv) != 2:
+        print("Usage: python clinvar_annotator.py <input_csv_path>")
+        sys.exit(1)
 
-    # Find ClinVar UIDs for the HGVS
+    input_path = Path(sys.argv[1])
     try:
-        # Call helper that wraps esearch; returns list of UID strings (may be
-        #  empty)
-        uids = find_clinvar_uids_for_hgvs(hgvs_input)
-    except Exception as exc:
-        # If the HTTP request or parsing fails, print an error and exit
-        print(
-            f"ERROR: Failed to search "
-            f"ClinVar for HGVS '{hgvs_input}': {exc}"
-        )
-        raise
-
-    # Delay for NCBI rate limiting
-    time.sleep(NCBI_RATE_LIMIT_SLEEP)
-
-    # Report found UIDs
-    if not uids:
-        # No ClinVar records found for the HGVS expression
-        print("No ClinVar UID found for that HGVS.")
-        # Still write an empty CSV row to indicate no result (optional)
-        with open("clinvar_result.csv", "w", newline="") as fh:
-            writer = csv.DictWriter(
-                fh,
-                fieldnames=[
-                    "hgvs",
-                    "clinvar_uid",
-                    "consensus_classification",
-                    "review_status_text",
-                    "star_rating",
-                ],
-            )
-            writer.writeheader()
-            writer.writerow(
-                {
-                    "hgvs": hgvs_input,
-                    "clinvar_uid": None,
-                    "consensus_classification": None,
-                    "review_status_text": None,
-                    "star_rating": None,
-                }
-            )
-        # Exit the script (nothing else to fetch)
-        raise SystemExit(0)
-    else:
-        # Use the top UID if multiple found (need to change later?)
-        clinvar_uid = uids[0]
-        print(f"Found ClinVar UID(s): {uids} -> using UID {clinvar_uid}")
-
-    # Grab the esummary for the found UID
-    try:
-        # Fetch the ClinVar esummary JSON for the UID
-        esummary = fetch_esummary_for_uid(clinvar_uid)
-    except Exception as exc:
-        # If fetching fails
-        print(
-            f"ERROR: Failed to fetch esummary for UID {clinvar_uid}: {exc}"
-        )
-        raise
-
-    # Delay for NCBI rate limiting
-    time.sleep(NCBI_RATE_LIMIT_SLEEP)
-
-    # Pretty-print the desired fields from esummary
-    print("Raw esummary keys available:", list(esummary.keys())[:20])
-
-    # Extract desired fields
-    extracted = extract_consensus_and_stars(esummary)
-
-    # Print extracted values for user
-    print("\nExtracted fields:")
-    print(
-        f"  consensus_classification: {extracted['consensus_classification']}"
-    )
-    print(f"  review_status_text:       {extracted['review_status_text']}")
-    print(f"  star_rating (0-4):        {extracted['star_rating']}")
-
-    # Write desired fields to CSV
-    out_csv_path = "clinvar_hgvs_summary.csv"
-    with open(out_csv_path, "w", newline="") as fh:
-        # Define CSV column order
-        fieldnames = [
-            "hgvs",
-            "clinvar_uid",
-            "consensus_classification",
-            "review_status_text",
-            "star_rating",
-        ]
-        writer = csv.DictWriter(fh, fieldnames=fieldnames)
-        # Write header row
-        writer.writeheader()
-        # Write a single row with desired fields
-        writer.writerow(
-            {
-                "hgvs": hgvs_input,
-                "clinvar_uid": clinvar_uid,
-                "consensus_classification": extracted[
-                    "consensus_classification"
-                ],
-                "review_status_text": extracted["review_status_text"],
-                "star_rating": extracted["star_rating"],
-            }
-        )
-
-    # Final message
-    print(f"\nDone — summary written to {out_csv_path}")
+        process_variants_file(input_path)
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
