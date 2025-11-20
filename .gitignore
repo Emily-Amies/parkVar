@@ -15,3 +15,5 @@ tests/
 # Data directory
 data/
 
+# Logs
+logs/ 
