@@ -1,0 +1,8 @@
+{
+  "g_hgvs": null,
+  "genomic_variant_error": "NC_000017.11:g.50198010C>A: Variant reference (C) does not agree with reference sequence (A)",
+  "hgvs_t_and_p": null,
+  "p_vcf": null,
+  "selected_build": "GRCh38"
+}
+
