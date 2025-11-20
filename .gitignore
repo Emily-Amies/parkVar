@@ -1,4 +1,17 @@
-# Ignore the following directories
-data/
+# Python cache
 __pycache__/
-logs/
+*.pyc
+
+# Ruff cache
+.ruff_cache/
+
+# Egg metadata
+*.egg-info/
+*.egg
+
+# Tests
+tests/
+
+# Data directory
+data/
+
