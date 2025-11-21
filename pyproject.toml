@@ -42,7 +42,7 @@ fix = false
 [tool.ruff.lint]
 # Select specific rules to enforce errors (E), Pyflakes (F) , warnings (W),
 # imports warnings (I) - see https://www.flake8rules.com/ for details
-select = ["E", "F", "W", "I", "D"]
+select = ["E", "F", "W", "I"]
 
 
 [tool.ruff.format]

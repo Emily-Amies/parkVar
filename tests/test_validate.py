@@ -1,13 +1,12 @@
+import json
+import re
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+
 import pytest
 import requests
-import parkVar.modules.validate as validate
-import json
-from pathlib import Path
-import logging
-from parkVar.utils.logger_config import logger
-import re
 
+import parkVar.modules.validate as validate
 
 TEST_DATA_DIR = Path("tests") / "test_data"
 
