@@ -20,13 +20,45 @@ UPLOAD_PAGE = """
   {% endif %}
 {% endwith %}
 
-<h1>Upload CSV</h1>
-<form method='POST' enctype='multipart/form-data'>
-  <input type='file' name='file' accept='.csv' required>
-  <button type='submit'>Upload</button>
+<form action='/refresh' method='post' style='margin-bottom: 1rem;'>
+    <button type='submit'>Refresh session</button>
 </form>
 """
 
+UPLOAD_TEMPLATE = UPLOAD_PAGE + """
+        <h1>Upload CSV</h1>
+
+        <form method='POST' enctype='multipart/form-data'>
+            <input type='file' name='file' accept='.csv' required>
+            <button type='submit'>Upload</button>
+        </form>
+
+        <form action='/annotate' method='post' style='margin-top: 1rem;'>
+            <button type='submit'>Annotate data</button>
+        </form>
+        """
+
+ANNO_TEMPLATE = UPLOAD_PAGE + '''
+        <p><em>{{ applied_text }}</em></p>
+
+        <h3>Filter by Patient_ID</h3>
+        <form action='/filter' method='post' style='margin-bottom: 1rem;'>
+            {% for pid in patient_ids %}
+                <label>
+                    <input type='checkbox'
+                           name='patient_id'
+                           value='{{ pid }}'
+                           {% if pid in selected_ids %}checked{% endif %}>
+                    {{ pid }}
+                </label><br>
+            {% endfor %}
+            <button type='submit' style='margin-top: 1rem;'>Apply filter</button>
+        </form>
+
+        <hr>
+        <h2>Filtered data</h2>
+        {{ table|safe }}
+        '''
 
 def create_df(file):
     # Read the raw bytes from the file object (that is encoded in UTF-8)
@@ -42,7 +74,7 @@ def create_df(file):
 def create_table(df):
     table = render_template_string(
         # Template for table
-        "<h1>Preview</h1><p>Rows: {{ n }}</p>{{ table|safe }}<hr>" + UPLOAD_PAGE,
+        "<h1>Preview</h1><p>Rows: {{ n }}</p>{{ table|safe }}<hr>" + UPLOAD_TEMPLATE,
         n=len(df),  # Number of rows
         # Convert the pandas dataframe into simple HTML table
         table=df.to_html(index=False),  # index=False - remove the index column
@@ -62,3 +94,32 @@ def load_uploaded_filenames(uploaded_files):
 
 def save_uploaded_filenames(uploaded_files, filenames: list):
     uploaded_files.write_text("\n".join(sorted(filenames)), encoding="utf-8")
+
+def show_checkboxes(table_html, patient_ids, selected_ids=None):
+    selected_ids = set(selected_ids or [])
+
+    return render_template_string(
+        UPLOAD_PAGE + '''
+        <hr>
+        <h2>Annotated data</h2>
+        {{ table|safe }}
+
+        <h3>Filter by Patient_ID</h3>
+        <form action='/filter' method='post' style='margin-top: 1rem;'>
+          {% for pid in patient_ids %}
+            <label>
+              <input type='checkbox'
+                     name='patient_id'
+                     value='{{ pid }}'
+                     {% if pid in selected_ids %}checked{% endif %}>
+              {{ pid }}
+            </label><br>
+          {% endfor %}
+          <button type='submit' style='margin-top: 1rem;'>Apply filter</button>
+        </form>
+        ''',
+        table=table_html,
+        patient_ids=patient_ids,
+        selected_ids=selected_ids,
+        show_upload=False   # hide the upload UI on this page
+    )
