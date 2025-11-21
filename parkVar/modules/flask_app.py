@@ -4,6 +4,8 @@ import io  # Needed for StringIO - used to make a file-like object in memory
 from parkVar.utils import flask_utils
 from pathlib import Path
 from parkVar.utils.logger_config import logger
+from parkVar.modules.validate import validate_variants
+from parkVar.modules.clinvar_annotator import process_variants_file
 
 
 # Create Flask object
@@ -104,7 +106,42 @@ def refresh_session():
 @app.route('/annotate', methods=['POST'])
 def annotate_data():
     data_dir = Path(__file__).resolve().parent.parent.parent / 'data'
+    input_path = data_dir / 'input_data.csv'
+    validator_path = data_dir / 'validated_data.csv'
     anno_path = data_dir / 'anno_data.csv'
+
+    # Validate variants
+    try:
+        validate_variants(input_path, validator_path)
+    except Exception as e:
+        logger.error('Validation failed')
+        user_msg = f'Validation failed: {e}'
+
+        # return an HTML response with 400 (bad request)
+        return render_template_string(
+            '''
+            <h2 style="color:crimson;">{{ msg }}</h2>
+            <p><a href="/">⬅ Back to upload</a></p>
+            ''',
+            msg=user_msg
+        ), 400
+    
+    # Annotate variants
+    try:
+        process_variants_file(validator_path)
+    except Exception as e:
+        logger.error('Annotation failed')
+        user_msg = f'Annotation failed: {e}'
+
+        # return an HTML response with 400 (bad request)
+        return render_template_string(
+            '''
+            <h2 style="color:crimson;">{{ msg }}</h2>
+            <p><a href="/">⬅ Back to upload</a></p>
+            ''',
+            msg=user_msg
+        ), 400
+
 
     if not anno_path.exists():
         return 'Annotated file not found. Did the annotation step run?', 400
