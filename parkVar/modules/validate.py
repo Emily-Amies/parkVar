@@ -338,14 +338,13 @@ def validate_variants(
     # Parse each VV response and update the variant DataFrame with the
     # retrieved values
     for index, vv_response in vv_responses.items():
-        vv_parsed_response = parse_vv_response(
-            vv_response=vv_response,
-            index=index
-        )
         update_df_with_parsed_vv_values(
             df=variant_df,
             index=index,
-            vv_parsed_response=vv_parsed_response
+            vv_parsed_response=parse_vv_response(
+                vv_response=vv_response,
+                index=index
+            )
         )
 
     variant_df.to_csv(output_csv_path, index=False)
