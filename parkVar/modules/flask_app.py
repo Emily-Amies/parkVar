@@ -16,26 +16,28 @@ app.secret_key = "AGE"
 # Defines what the app does when someone visits the root URL '/'
 @app.route("/", methods=["GET", "POST"])
 def upload():
-    # GET - Show the form
+
+    table_html = None
+
+    # Landing page
     if request.method == "GET":
-        # Render the HTML template from a string rather than a file
         return render_template_string(flask_utils.UPLOAD_TEMPLATE)
 
-
-    ##########################################################################
-    # Load in files
-    ##########################################################################
-
-    # Flask object that holds the file, loos for input field named 'file'
-    # from the HTML form
-    file = request.files.get("file")
-    filename = file.filename
+    # What happens when user uploads a file
+    if request.method == "POST":
+        # Flask object that holds the file, looks for input field named 'file'
+        # from the HTML form
+        file = request.files.get("file")
 
     # If no file is provided, sends a message and HTML status code 400
     # (bad request)
     if not file or file.filename == "":
         logger.warning(f"{filename} not found")
-        return "No file uploaded", 400
+        flash('No file uploaded', 'warning')
+        # Go back to the upload page
+        return render_template_string(flask_utils.UPLOAD_TEMPLATE), 400
+        
+    filename = file.filename
 
     # Convert file object to a pandas dataframe
     try:
@@ -44,21 +46,18 @@ def upload():
         logger.error(f"Failed to read CSV: {e}")
         return f"Failed to read CSV: {e}", 400
 
-    # Add patient ID column
-
     # Add patient ID as first column
     patient_id = Path(filename).stem # strips .csv
     if 'Patient_ID' in df.columns:
         df = df.drop(columns=['Patient_ID'])
     df.insert(0, 'Patient_ID', patient_id)
 
-    ##########################################################################
-    # Save data to temporary data file
-    ##########################################################################
+    # Remove ID column
+    if 'ID' in df.columns:
+        df = df.drop(columns=['ID'])
 
-    # Create a temporary directory to store data
+    # Create temporary directory to store data
     data_dir = Path(__file__).resolve().parent.parent.parent / "data"
-    # If the directory already exists, delete it to start a fresh session
     data_dir.mkdir(exist_ok=True)
 
     # CSV file to store the input data
@@ -73,25 +72,30 @@ def upload():
     # It will append the CSV to existing CSVs if present. This means the user
     # can upload more than one CSV.
     if filename in filenames:
+        # Check the selected file against list of filenames already uploaded
         logger.warning(f"{filename} already uploaded")
         flash(f"⚠ {filename} has already been uploaded", "warning")
     else:
+        # If a csv with data from other files exists, append the data from
+        # the new file to it
         if input_data_path.exists():
             df.to_csv(input_data_path, mode="a", index=False, header=False)
-            logger.info(f"Added file: {filename}")
-            flash(f"Uploaded {filename}", "info")
-            filenames.append(filename)
+        # If a csv with data from other files doesn't exist, create one using
+        # the pandas df
         else:
             df.to_csv(f"{data_dir}/input_data.csv", index=False)
-            logger.info(f"Added file: {filename}")
-            flash(f"Uploaded {filename}", "info")
-            filenames.append(filename)
 
-    flask_utils.save_uploaded_filenames(uploaded_files, filenames)
+        logger.info(f"Added file: {filename}")
+        flash(f"Uploaded {filename}", "info")
+        filenames.append(filename)
+
+        # Save the updated list of uploaded files
+        flask_utils.save_uploaded_filenames(uploaded_files, filenames)
 
     # Render the CSV as an HTML table using the template string
-    return flask_utils.create_table(df)
+    table_html = flask_utils.create_table(df)
 
+    return render_template_string(flask_utils.UPLOAD_ANNO_TEMPLATE + table_html)
 
 @app.route('/refresh', methods=['POST'])
 def refresh_session():
