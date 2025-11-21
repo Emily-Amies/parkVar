@@ -1,3 +1,5 @@
+"""Functions for validating and gathering valid variant descriptions/annotation
+ variants using the Variant Validator API."""
 import sys
 import time
 from typing import Any, Dict, Optional
@@ -13,8 +15,7 @@ GENOME_BUILD = "GRCh38"
 
 
 def setup_df(input_csv_path: str, vv_values: dict) -> pd.DataFrame:
-    """
-    Reads a CSV file containing genomic variants and initialises a DataFrame
+    """Reads a CSV file containing genomic variants and initialises a DataFrame
     with additional columns for Variant Validator values.
 
     This function reads the input CSV file into a DataFrame, adds a
@@ -35,8 +36,8 @@ def setup_df(input_csv_path: str, vv_values: dict) -> pd.DataFrame:
     Returns:
         pd.DataFrame: A DataFrame containing the input data with additional
         columns initialized for Variant Validator values.
-    """
 
+    """
     logger.info(f"Reading in variants from {input_csv_path}")
     variant_df = pd.read_csv(input_csv_path)
 
@@ -60,8 +61,7 @@ def construct_vv_url(
     checkonly: bool = False,
     liftover: bool = False
 ) -> str:
-    """
-    Construct a Variant Validator LOVD endpoint URL.
+    """Construct a Variant Validator LOVD endpoint URL.
 
     Build a full LOVD URL from a variant description and optional flags, to be
     used for querying the Variant Validator API via "call_variant_validator".
@@ -79,6 +79,7 @@ def construct_vv_url(
 
     Returns:
         str: Fully constructed LOVD URL.
+
     """
     # Construct the full URL from function parameters + base URL
     url = (
@@ -89,8 +90,7 @@ def construct_vv_url(
 
 
 def call_variant_validator(url: str) -> dict:
-    """
-    Call the Variant Validator LOVD endpoint and return parsed JSON.
+    """Call the Variant Validator LOVD endpoint and return parsed JSON.
 
     Given a URL, send a GET request and return the
     JSON body when the response status is 200. Non-200 responses are logged
@@ -102,8 +102,8 @@ def call_variant_validator(url: str) -> dict:
 
     Returns:
         dict: JSON response on successful request (i.e. status code 200).
-    """
 
+    """
     params = {"content-type": "application/json"}
     headers = {"accept": "application/json"}
 
@@ -135,9 +135,8 @@ def bulk_call_variant_validator(
     variant_df: pd.DataFrame,
     min_interval: float = 0.25
 ) -> Dict[int, dict]:
-    """
-    Call Variant Validator (VV) for each variant in a DataFrame, respecting a
-    minimum inter-request interval given in seconds.
+    """Call Variant Validator (VV) for each variant in a DataFrame, respecting
+    a minimum inter-request interval given in seconds.
 
     For every row in `variant_df` a variant description is built from the
     '#CHROM', 'POS', 'REF' and 'ALT' columns. Each variant is requested
@@ -156,6 +155,7 @@ def bulk_call_variant_validator(
     Returns:
         Dict[int, dict]: Mapping from DataFrame row index to the Variant
             Validator response dict for that variant.
+
     """
     vv_responses = {}
 
@@ -188,8 +188,7 @@ def parse_vv_response(
         vv_response: dict,
         index: int
 ) -> Optional[Dict[str, Any]]:
-    """
-    Parse a Variant Validator (VV) response for one variant row.
+    """Parse a Variant Validator (VV) response for one variant row.
 
     Returns a dict with keys "g_hgvs", "t_hgvs", "hgnc_id", "symbol" and
     "p_hgvs_tlc" when the genomic description has no error and exactly one
@@ -203,8 +202,8 @@ def parse_vv_response(
 
     Returns:
         dict or None: Parsed values on success, otherwise None.
-    """
 
+    """
     vv_parsed_response = {}
 
     # Check if any errors are reported by VV for the genomic variant
@@ -257,8 +256,7 @@ def update_df_with_parsed_vv_values(
     index: int,
     vv_parsed_response: Dict[str, Any]
 ) -> None:
-    """
-    Updates a DataFrame with values obtained from the Variant Validator API.
+    """Updates a DataFrame with values obtained from the Variant Validator API.
 
     This function updates specific columns in the DataFrame for a given row
     index based on the values provided in the `vv_parsed_response` dictionary.
@@ -283,9 +281,10 @@ def update_df_with_parsed_vv_values(
             "symbol": "GENE1",
             "p_hgvs_tlc": "p.Ala123Thr"
         }
+
     """
     for key, value in vv_parsed_response.items():
-        if value:
+        if value is not None:
             df.at[index, key] = value
         else:
             logger.warning(
@@ -297,8 +296,7 @@ def validate_variants(
     input_csv_path: str,
     output_csv_path: str
 ) -> None:
-    """
-    Validate variants from an input CSV and write results to an output CSV.
+    """Validate variants from an input CSV and write results to an output CSV.
 
     Reads variants from `input_csv_path`, adds and initializes columns used
     to store Variant Validator values, queries the Variant Validator API
@@ -313,8 +311,8 @@ def validate_variants(
 
     Returns:
         None: The updated DataFrame is written to `output_csv_path`.
-    """
 
+    """
     # Define the Variant Validator values to be extracted and their default
     # values when setting up the DataFrame
     vv_values = {
