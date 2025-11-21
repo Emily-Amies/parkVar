@@ -364,6 +364,6 @@ class TestUpdateDfWithParsedVvValues:
         )
 
         assert len(caplog.records) == none_count, (
-            f"Expected one warning to be logged, but found"
+            f"Expected {none_count} warnings to be logged, but found"
             f" {len(caplog.records)}."
         )
