@@ -11,9 +11,6 @@ from parkVar.utils.logger_config import logger
 # versions
 GENOME_BUILD = "GRCh38"
 
-# Define API rate limit
-API_RATE_LIMIT_PER_SECOND = 4
-
 
 def setup_df(input_csv_path: str, vv_values: dict) -> pd.DataFrame:
     """
@@ -54,42 +51,58 @@ def setup_df(input_csv_path: str, vv_values: dict) -> pd.DataFrame:
 # Although variant_desc is the only parameter currently being used,
 # with the other params being left as default when the function is called,
 # the other params have been included to allow for future flexibility
-def call_variant_validator(
+def construct_vv_url(
     variant_desc: str,
+    base_url: str = "https://rest.variantvalidator.org/LOVD/lovd",
     genome_build: str = GENOME_BUILD,
     transcript_model: str = "refseq",
     select_transcripts: str = "mane_select",
     checkonly: bool = False,
-    liftover: bool = False,
-) -> dict:
-
+    liftover: bool = False
+) -> str:
     """
-    Calls the Variant Validator API LOVD endpoint with the specified parameters
-    . For additional information on the LOVD endpoint parameters refer to
-    Variant Validator's API documentation at:
-    https://rest.variantvalidator.org/.
+    Construct a Variant Validator LOVD endpoint URL.
+
+    Build a full LOVD URL from a variant description and optional flags, to be
+    used for querying the Variant Validator API via "call_variant_validator".
 
     Args:
-        variant_desc (str): The variant description.
-        genome_build (str): The genome build (default: "GRCh38").
-        transcript_model (str): The transcript model (default: "refseq").
-        select_transcripts (str): Whether to select transcripts (default:
+        variant_desc (str): Variant description (e.g. "1-100-A-T").
+        base_url (str): Base LOVD endpoint (default provided).
+        genome_build (str): Genome build identifier (default: GENOME_BUILD).
+        transcript_model (str): Transcript model (default: "refseq").
+        select_transcripts (str): Transcript selection mode (default:
             "mane_select").
-        checkonly (bool): Whether to return only the genomic variant
-            descriptions (default: False).
-        liftover (bool): Whether to perform a liftover (default: False).
+        checkonly (bool): If True, request check-only behaviour (default:
+            False).
+        liftover (bool): If True, perform liftover (default: False).
 
     Returns:
-        dict: The JSON response from the API if request is successful.
+        str: Fully constructed LOVD URL.
     """
-    # Base URL for the API
-    base_url = "https://rest.variantvalidator.org/LOVD/lovd"
-
     # Construct the full URL from function parameters + base URL
     url = (
         f"{base_url}/{genome_build}/{variant_desc}/{transcript_model}"
         f"/{select_transcripts}/{checkonly}/{liftover}"
     )
+    return url
+
+
+def call_variant_validator(url: str) -> dict:
+    """
+    Call the Variant Validator LOVD endpoint and return parsed JSON.
+
+    Given a URL, send a GET request and return the
+    JSON body when the response status is 200. Non-200 responses are logged
+    and an HTTPError is raised. Network/request exceptions are logged and
+    re-raised.
+
+    Args:
+        url (str): Full LOVD endpoint URL to request.
+
+    Returns:
+        dict: JSON response on successful request (i.e. status code 200).
+    """
 
     params = {"content-type": "application/json"}
     headers = {"accept": "application/json"}
@@ -120,36 +133,30 @@ def call_variant_validator(
 
 def bulk_call_variant_validator(
     variant_df: pd.DataFrame,
-    api_rate_limit_per_sec: int
+    min_interval: float = 0.25
 ) -> Dict[int, dict]:
     """
-    Call Variant Validator for every variant in a DataFrame obeying a rate
-    limit.
+    Call Variant Validator (VV) for each variant in a DataFrame, respecting a
+    minimum inter-request interval given in seconds.
 
-    For each row in `variant_df` this function builds a variant description
-    from the '#CHROM', 'POS', 'REF' and 'ALT' columns, calls
-    `call_variant_validator`, and stores the per-row response in a dict
+    For every row in `variant_df` a variant description is built from the
+    '#CHROM', 'POS', 'REF' and 'ALT' columns. Each variant is requested
+    via `call_variant_validator` and the VV response is stored in a dict
     keyed by the DataFrame row index.
 
-    The `api_rate_limit_per_sec` parameter is treated as requests per second.
-    The function computes a minimum inter-request interval as
-    1 / api_rate_limit_per_sec and inserts sleeps so requests do not exceed
-    that rate.
+    If a request completes faster than `min_interval` seconds, the function
+    sleeps the remaining time so the effective request rate does not
+    exceed the intended frequency.
 
     Args:
-        variant_df (pd.DataFrame): DataFrame with columns '#CHROM', 'POS',
-            'REF', 'ALT'.
-        api_rate_limit_per_sec (int): Allowed number of API requests per
-            second.
+        variant_df (pd.DataFrame): DataFrame containing '#CHROM', 'POS',
+            'REF' and 'ALT' columns.
+        min_interval (float): Minimum seconds to wait between requests.
 
     Returns:
-        dict: Mapping from DataFrame row index to the Variant Validator
-        response dict for that variant.
+        Dict[int, dict]: Mapping from DataFrame row index to the Variant
+            Validator response dict for that variant.
     """
-
-    # Calculat num of seconds to wait between API calls to respect rate limit
-    min_interval = 1/api_rate_limit_per_sec
-
     vv_responses = {}
 
     # Loop over each row of variant df, construct variant description from the
@@ -160,12 +167,12 @@ def bulk_call_variant_validator(
             f"{row['#CHROM']}-{row['POS']}-{row['REF']}-{row['ALT']}"
         )
 
+        url = construct_vv_url(variant_desc=variant_desc)
+
         start_time = time.time()
 
-        vv_responses[index] = call_variant_validator(
-            variant_desc=variant_desc,
-            genome_build=GENOME_BUILD
-        )[variant_desc][variant_desc]
+        vv_responses[index] = call_variant_validator(url=url)[variant_desc][
+            variant_desc]
 
         # Calculate the time taken for the request
         elapsed_time = time.time() - start_time
@@ -328,10 +335,7 @@ def validate_variants(
 
     # Get Variant Validator responses for all variants in the DataFrame
     # stored in a dict with row index as key
-    vv_responses = bulk_call_variant_validator(
-        variant_df=variant_df,
-        api_rate_limit_per_sec=API_RATE_LIMIT_PER_SECOND
-    )
+    vv_responses = bulk_call_variant_validator(variant_df=variant_df)
 
     # Parse each VV response and update the variant DataFrame with the
     # retrieved values

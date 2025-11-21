@@ -40,9 +40,9 @@ fix = false
 
 
 [tool.ruff.lint]
-# Select specific rules to enforce (errors (E), Pyflakes (F) , warnings (W),
-# and imports warnings (I) - see https://www.flake8rules.com/ for details
-select = ["E", "F", "W", "I"]
+# Select specific rules to enforce errors (E), Pyflakes (F) , warnings (W),
+# imports warnings (I), pydocstyle (D) - see https://www.flake8rules.com/ for details
+select = ["E", "F", "W", "I", "D"]
 
 
 [tool.ruff.format]

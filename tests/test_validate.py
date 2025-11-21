@@ -160,7 +160,6 @@ class TestCallVariantValidator:
                 )
 
 
-
 @pytest.fixture
 def mock_genomic_var_error_vv_response():
     """
@@ -168,6 +167,7 @@ def mock_genomic_var_error_vv_response():
     """
     fp = TEST_DATA_DIR / "genomic_var_error_vv_response.json"
     return json.loads(fp.read_text())
+
 
 @pytest.fixture
 def mock_two_transcript_error_vv_response():
@@ -177,31 +177,52 @@ def mock_two_transcript_error_vv_response():
     fp = TEST_DATA_DIR / "two_transcript_error_vv_response.json"
     return json.loads(fp.read_text())
 
-class TestParseVVResponse:
 
-
-    def test_correctly_parses_response(self, mock_valid_vv_response):
-        """
-        Test that parse_vv_response correctly extracts expected fields from
-        a mock Variant Validator response.
-        """
-        expected_output = {
+@pytest.fixture
+def valid_parsed_vv_rspns():
+    """
+    Fixture to provide a valid parsed VV response dictionary.
+    """
+    valid_parsed_vv_rspns = {
+        0: {
             "g_hgvs": "NC_000017.11:g.50198002C>A",
             "t_hgvs": "NM_000088.4:c.589G>T",
             "hgnc_id": "HGNC:2197",
             "symbol": "COL1A1",
-            "p_hgvs_tlc": "NP_000079.2:p.(Gly197Cys)",
+            "p_hgvs_tlc": "NP_000079.2:p.(Gly197Cys)"
+        },
+        1: {
+            "g_hgvs": "NC_000017.11:g.43063903G>T",
+            "t_hgvs": "NM_007294.4:c.5123C>A",
+            "hgnc_id": "HGNC:1100",
+            "symbol": "BRCA1",
+            "p_hgvs_tlc": "NP_009225.1:p.(Ala1708Glu)"
         }
+    }
+    return valid_parsed_vv_rspns
 
+
+class TestParseVVResponse:
+    """Tests for the parse_vv_response function in parkVar.modules.validate."""
+
+    def test_correctly_parses_response(
+            self,
+            mock_valid_vv_response,
+            valid_parsed_vv_rspns
+    ):
+        """
+        Test that parse_vv_response correctly extracts expected fields from
+        a mock Variant Validator response.
+        """
+        index = 0
         parsed_output = validate.parse_vv_response(
             vv_response=mock_valid_vv_response,
-            index=0  # Arbitrary index for testing, as this value has no
-                     # corresponding dataframe index
+            index=index
         )
 
-        assert parsed_output == expected_output, (
+        assert parsed_output == valid_parsed_vv_rspns[index], (
             f"Parsed output does not match expected output.\n"
-            f"Expected: {expected_output}\n"
+            f"Expected: {valid_parsed_vv_rspns}\n"
             f"Found: {parsed_output}"
         )
 
@@ -214,12 +235,15 @@ class TestParseVVResponse:
         Test that a warning is logged if the 'genomic_variant_error' field
         in the VV response is not None.
         """
-        with caplog.at_level(logging.WARNING, logger=logger.name):
-            validate.parse_vv_response(
-                vv_response=mock_genomic_var_error_vv_response,
-                index=0
-            )
-        assert len(caplog.records) == 1, "Expected one warning to be logged."
+
+        validate.parse_vv_response(
+            vv_response=mock_genomic_var_error_vv_response,
+            index=0
+        )
+        assert len(caplog.records) == 1, (
+            f"Expected one warning to be logged, but found"
+            f" {len(caplog.records)}."
+        )
 
         warning_message = caplog.records[0].message
 
@@ -237,15 +261,109 @@ class TestParseVVResponse:
         Test that a warning is logged if multiple transcripts are found in
         the VV response.
         """
-        with caplog.at_level(logging.WARNING, logger=logger.name):
-            validate.parse_vv_response(
-                vv_response=mock_two_transcript_error_vv_response,
-                index=0
-            )
-        assert len(caplog.records) == 1, "Expected one warning to be logged."
+        validate.parse_vv_response(
+            vv_response=mock_two_transcript_error_vv_response,
+            index=0
+        )
+        assert len(caplog.records) == 1, (
+            f"Expected one warning to be logged, but found"
+            f" {len(caplog.records)}."
+        )
 
         warning_message = caplog.records[0].message
 
         # Assert correct warning raised
         pattern = r">1"
         assert re.search(pattern, warning_message)
+
+
+@pytest.fixture
+def incomplete_parsed_response():
+    """
+    Fixture to provide an incomplete parsed VV response dictionary.
+    """
+    return {
+        "g_hgvs": "NC_000017.11:g.50198002C>A",
+        "t_hgvs": None,
+        "hgnc_id": "HGNC:2197",
+        "symbol": "COL1A1",
+        "p_hgvs_tlc": None
+    }
+
+
+class TestUpdateDfWithParsedVvValues:
+    """
+    Tests for the update_df_with_parsed_vv_values function in
+    parkVar.modules.validate.
+    """
+    @pytest.mark.parametrize("idx", [0, 1])
+    def test_dataframe_updated_correctly(self, df, valid_parsed_vv_rspns, idx):
+        """
+        Test that the DataFrame is updated correctly with parsed VV values
+        at different indexes.
+        """
+        validate.update_df_with_parsed_vv_values(
+            df=df,
+            index=idx,
+            vv_parsed_response=valid_parsed_vv_rspns[idx]
+        )
+
+        for col, expected_value in valid_parsed_vv_rspns[idx].items():
+            actual_value = df.loc[idx, col]
+
+            assert actual_value == expected_value, (
+                f"Column '{col}' value at index {idx} does not "
+                f"match expected value after update.\n"
+                f"Expected: {expected_value}\n"
+                f"Found: {actual_value}"
+            )
+
+    def test_no_value_in_df_when_missing_value_in_parsed_response(
+        self,
+        df,
+        incomplete_parsed_response
+    ):
+        """
+        Test that DataFrame retains None value when parsed VV response is
+        missing expected fields.
+        """
+        validate.update_df_with_parsed_vv_values(
+            df=df,
+            index=0,
+            vv_parsed_response=incomplete_parsed_response
+        )
+
+        for col, expected_value in incomplete_parsed_response.items():
+            actual_value = df.loc[0, col]
+
+            assert actual_value == expected_value, (
+                f"Column '{col}' value at index 0 does not "
+                f"match expected value after update with incomplete "
+                f"parsed response.\n"
+                f"Expected: {expected_value}\n"
+                f"Found: {actual_value}"
+            )
+
+    def test_warning_logged_when_missing_value_in_parsed_response(
+        self,
+        df,
+        incomplete_parsed_response,
+        caplog
+    ):
+        """
+        Test that a warning is logged when the parsed VV response is missing
+        expected fields.
+        """
+        validate.update_df_with_parsed_vv_values(
+            df=df,
+            index=0,
+            vv_parsed_response=incomplete_parsed_response
+        )
+        none_count = sum(
+            1 for v in incomplete_parsed_response.values() if v is None
+        )
+
+        assert len(caplog.records) == none_count, (
+            f"Expected one warning to be logged, but found"
+            f" {len(caplog.records)}."
+        )
