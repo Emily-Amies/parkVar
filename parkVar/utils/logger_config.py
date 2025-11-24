@@ -5,7 +5,8 @@ from pathlib import Path
 
 def setup_logger(
     name,
-    level=10,
+    file_level=10,
+    stream_level=10,
     maxBytes=500000,
     backupCount=2
 ):
@@ -43,10 +44,11 @@ def setup_logger(
     if not isinstance(name, str):
         raise TypeError("name must be a string")
 
-    if level not in valid_levels:
-        raise ValueError(
-            f'level must be one of {sorted(valid_levels)}, got {level}'
-        )
+    for level in (stream_level, file_level):
+        if level not in valid_levels:
+            raise ValueError(
+                f'level must be one of {sorted(valid_levels)}, got {level}'
+            )
 
     if not isinstance(maxBytes, int) or maxBytes <= 0:
         raise ValueError("maxBytes must be a positive integer")
@@ -61,11 +63,11 @@ def setup_logger(
     formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 
     logger = logging.getLogger(name)
-    logger.setLevel(level)
+    logger.setLevel(file_level)
 
     # Add stream handler
     stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(level)
+    stream_handler.setLevel(stream_level)
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
 

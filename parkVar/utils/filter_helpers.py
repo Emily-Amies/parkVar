@@ -21,8 +21,10 @@ def _filter_df(df, filtered_path):
 
     # Check if Patient_ID is in dataframe
     if 'Patient_ID' not in df.columns:
-        logger.error('Patient_ID column missing when filtering')
-        return 'Patient_ID column missing from data', 400
+        raise flask_utils.MissingColumnError(
+            context='Patient_ID',
+            original_exception=KeyError('Patient_ID')
+    )
 
     # List of selected patient IDs from the form
     selected_ids = request.form.getlist('patient_id')

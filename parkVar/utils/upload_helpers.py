@@ -21,8 +21,9 @@ def _upload_file(request):
         flash('No file uploaded', 'warning')
         # Go back to the upload page
         return render_template_string(flask_utils.UPLOAD_TEMPLATE), 400
-    
-    return file
+    else:
+        logger.info(f"{file.filename} uploaded sucessfully")
+        return file
 
 def _create_pandas_dataframe(file):
     # Convert file object to a pandas dataframe
@@ -42,11 +43,13 @@ def _create_pandas_dataframe(file):
     patient_id = Path(file.filename).stem # strips .csv
     if 'Patient_ID' in df.columns:
         df = df.drop(columns=['Patient_ID'])
+        logger.info("Patient_ID column exists. Deleting column.")
     df.insert(0, 'Patient_ID', patient_id)
 
     # Remove ID column
     if 'ID' in df.columns:
         df = df.drop(columns=['ID'])
+        logger.info("ID column exists. Deleting column.")
 
     return df
 
@@ -96,6 +99,5 @@ def _write_to_csv(data_dir, file, df):
             context='input_data.csv',
             original_exception=FileNotFoundError(f'{context} does not exist')
         )
-
-    logger.info(f"Added file: {file.filename}")
+        
     flash(f"Uploaded {file.filename}", "info")
