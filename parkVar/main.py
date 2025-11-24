@@ -22,3 +22,7 @@ if __name__ == '__main__':
 
     # Run the app
     app.run(host='127.0.0.1', port=5000, debug=True)
+
+
+    # lsof -i :5000
+# kill -9 <id>
