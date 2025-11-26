@@ -17,9 +17,8 @@ def _upload_file(request):
     # If no file is provided, sends a message and HTML status code 400
     # (bad request)
     if not file or file.filename == "":
-        logger.warning(f"{filename} not found")
-        flash('No file uploaded', 'warning')
-        # Go back to the upload page
+        logger.warning("No file uploaded")
+        flash("No file uploaded", "warning")
         return render_template_string(flask_utils.UPLOAD_TEMPLATE), 400
     else:
         logger.info(f"{file.filename} uploaded sucessfully")
@@ -92,12 +91,5 @@ def _write_to_csv(data_dir, file, df):
         df.to_csv(input_data_path, mode="a", index=False, header=False)
     else:
         df.to_csv(f"{data_dir}/input_data.csv", index=False)
-
-    # Check input file exists
-    if not input_data_path.exists():
-        raise flask_utils.MissingFileError(
-            context='input_data.csv',
-            original_exception=FileNotFoundError(f'{context} does not exist')
-        )
         
     flash(f"Uploaded {file.filename}", "info")

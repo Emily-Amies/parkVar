@@ -10,6 +10,13 @@ from parkVar.modules.clinvar_annotator import process_variants_file
 
 def _validate(input_path, validator_path):
 
+    # Check input file exists
+    if not input_path.exists():
+        raise flask_utils.MissingFileError(
+            context='input_data.csv',
+            original_exception=FileNotFoundError('input_data.csv does not exist')
+        )
+
     try:
         # Creates validated_data.csv in data/
         validate_variants(input_path, validator_path)
@@ -18,14 +25,15 @@ def _validate(input_path, validator_path):
             context = 'Validation',
             original_exception=e
     )
-    # Double check validation step completed
+        
+def _annotate(validator_path, anno_path):
+
+    # Check validated_data.csv exists
     if not validator_path.exists():
         raise flask_utils.MissingFileError(
             context='validated_data.csv',
-            original_exception=FileNotFoundError(f'{context} does not exist')
+            original_exception=FileNotFoundError('validated_data.csv does not exist')
         )
-        
-def _annotate(validator_path, anno_path):
 
     try:
         # Creates anno_data.csv in data/
@@ -36,14 +44,15 @@ def _annotate(validator_path, anno_path):
             original_exception=e
     )
 
-    # Double check annotation step completed
+
+def _build_table(anno_path):
+
+    # Check validated_data.csv exists
     if not anno_path.exists():
         raise flask_utils.MissingFileError(
             context='anno_data.csv',
-            original_exception=FileNotFoundError(f'{context} does not exist')
+            original_exception=FileNotFoundError('anno_data.csv does not exist')
         )
-
-def _build_table(anno_path):
 
     # Read csv to pandas dataframe
     try:
@@ -56,7 +65,7 @@ def _build_table(anno_path):
 
     logger.info(f'Loaded annotated data with {len(df)} rows')
 
-    # build HTML table
+    # Build HTML table
     table_html = flask_utils.create_table(df)
 
     return df, table_html

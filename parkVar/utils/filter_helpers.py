@@ -5,13 +5,13 @@ from parkVar.utils import flask_utils
 from pathlib import Path
 from parkVar.utils.logger_config import logger
 
-def _read_anno_data(anno_path):
+def _read_anno_data(anno_path, file):
     # Create pandas dataframe from csv
     try:
         df = pd.read_csv(anno_path)
     except Exception as e:
         raise flask_utils.CSVReadError(
-            context = file.filename,
+            context = 'anno_data.csv',
             original_exception=e
     )
 
@@ -61,3 +61,4 @@ def _show_filter_page(df, filtered_df, selected_ids, applied_text):
         patient_ids=patient_ids,
         selected_ids=selected_ids
     )
+
