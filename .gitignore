@@ -9,9 +9,6 @@ __pycache__/
 *.egg-info/
 *.egg
 
-# Tests
-tests/
-
 # Data directory
 data/
 
