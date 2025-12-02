@@ -1,13 +1,53 @@
-from flask import Flask, request, render_template_string, flash, redirect, url_for
-import pandas as pd
-import io  # Needed for StringIO - used to make a file-like object in memory
-from parkVar.utils import flask_utils
-from pathlib import Path
-from parkVar.utils.logger_config import logger
-from parkVar.utils import upload_helpers as uploads
+"""
+Helpers for handling file upload, normalising input CSVs and persisting
+uploaded data for the parkVar web interface.
 
+This module provides:
+- a wrapper for handling file uploads from a Flask request
+- conversion of uploaded CSV files into pandas DataFrames
+- tracking of files already uploaded in the current session
+- writing combined input data to a CSV for downstream processing
+
+Author: Emily Amies
+Group: 4
+
+Notes:
+- Uploaded filenames are tracked in 'uploaded_files.txt' within the
+  provided data directory.
+- Input data are written/append to 'input_data.csv' in the same directory.
+"""
+
+
+from pathlib import Path
+import io
+import pandas as pd
+from flask import Request, flash, render_template_string
+
+from parkVar.utils import flask_utils
+from parkVar.utils.logger_config import logger
 
 def _upload_file(request):
+    """
+    Extract a file from a Flask request and perform basic validation.
+
+    Parameters
+    ----------
+    request : flask.Request
+        The incoming Flask request object.
+
+    Returns
+    -------
+    werkzeug.datastructures.FileStorage or tuple
+        The uploaded file object if present and valid.
+        If no file is provided, returns a tuple:
+        (rendered upload template HTML, 400).
+
+    Notes
+    -----
+    The caller is responsible for handling the case where a tuple is
+    returned instead of a file object.
+    """
+
     # What happens when user uploads a file
     if request.method == "POST":
         # Flask object that holds the file, looks for input field named 'file'
@@ -24,7 +64,34 @@ def _upload_file(request):
         logger.info(f"{file.filename} uploaded sucessfully")
         return file
 
+
 def _create_pandas_dataframe(file):
+    """
+    Convert an uploaded CSV file into a pandas DataFrame and normalise columns.
+
+    Steps
+    -----
+    - Decode the uploaded bytes as UTF-8.
+    - Read into a DataFrame using pandas.
+    - Set a Patient_ID column based on the filename (stem).
+    - Drop any existing Patient_ID or ID columns to avoid duplication.
+
+    Parameters
+    ----------
+    file : werkzeug.datastructures.FileStorage
+        The uploaded file object.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Normalised DataFrame containing the uploaded data.
+
+    Raises
+    ------
+    flask_utils.CSVReadError
+        If the file cannot be read into a DataFrame.
+    """
+
     # Convert file object to a pandas dataframe
     try:
         text = file.read().decode("utf-8")
@@ -34,25 +101,48 @@ def _create_pandas_dataframe(file):
         df = pd.read_csv(io.StringIO(text))
     except Exception as e:
         raise flask_utils.CSVReadError(
-            context = file.filename,
-            original_exception=e
-    )
+            context=file.filename, original_exception=e
+        )
 
     # Add patient ID as first column
-    patient_id = Path(file.filename).stem # strips .csv
-    if 'Patient_ID' in df.columns:
-        df = df.drop(columns=['Patient_ID'])
+    patient_id = Path(file.filename).stem  # strips .csv
+    if "Patient_ID" in df.columns:
+        df = df.drop(columns=["Patient_ID"])
         logger.info("Patient_ID column exists. Deleting column.")
-    df.insert(0, 'Patient_ID', patient_id)
+    df.insert(0, "Patient_ID", patient_id)
 
     # Remove ID column
-    if 'ID' in df.columns:
-        df = df.drop(columns=['ID'])
+    if "ID" in df.columns:
+        df = df.drop(columns=["ID"])
         logger.info("ID column exists. Deleting column.")
 
     return df
 
+
 def _check_existing_files(file, data_dir):
+    """
+    Track uploaded filenames and warn if a file has already been uploaded.
+
+    Parameters
+    ----------
+    file : werkzeug.datastructures.FileStorage
+        The uploaded file object.
+    data_dir : pathlib.Path
+        Directory where tracking and data files are stored.
+
+    Returns
+    -------
+    str or None
+        If the file has already been uploaded, returns rendered HTML for the
+        annotation template (early exit case).
+        Otherwise, updates the tracking file and returns None.
+
+    Notes
+    -----
+    This function uses flash messaging to notify the user when a file has
+    already been uploaded in the current session.
+    """
+
     # File to store filenames that have been uploaded this session
     uploaded_files = Path(data_dir / "uploaded_files.txt")
 
@@ -61,10 +151,10 @@ def _check_existing_files(file, data_dir):
         filenames = list()
     else:
         filenames = [
-        line.strip()
-        for line in uploaded_files.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
+            line.strip()
+            for line in uploaded_files.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
 
     # Check the selected file against list of filenames already uploaded
     if file.filename in filenames:
@@ -74,12 +164,27 @@ def _check_existing_files(file, data_dir):
 
     # Save the updated list of uploaded files
     filenames.append(file.filename)
-    uploaded_files.write_text("\n".join(sorted(filenames)), \
-    encoding="utf-8")
-    
+    uploaded_files.write_text("\n".join(sorted(filenames)), encoding="utf-8")
+
 
 def _write_to_csv(data_dir, file, df):
+    """
+    Append uploaded data to the combined input CSV, or create it if missing.
 
+    Parameters
+    ----------
+    data_dir : pathlib.Path
+        Directory where 'input_data.csv' is stored.
+    file : werkzeug.datastructures.FileStorage
+        The uploaded file object (used for logging and messaging).
+    df : pandas.DataFrame
+        DataFrame to write or append.
+
+    Notes
+    -----
+    - If 'input_data.csv' exists, the new data are appended without a header.
+    - If it does not exist, the file is created with a header row.
+    """
     # CSV file to store the input data
     input_data_path = data_dir / "input_data.csv"
 
@@ -91,5 +196,5 @@ def _write_to_csv(data_dir, file, df):
         df.to_csv(input_data_path, mode="a", index=False, header=False)
     else:
         df.to_csv(f"{data_dir}/input_data.csv", index=False)
-        
+
     flash(f"Uploaded {file.filename}", "info")
