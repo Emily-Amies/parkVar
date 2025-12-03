@@ -1,13 +1,12 @@
 import time
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import requests
 from requests import RequestException
 
 from parkVar.utils.logger_config import logger
-
 
 # Step 1: Define constants for ClinVar API
 
@@ -26,16 +25,18 @@ REVIEW_STATUS_TO_STARS = {
 
 # Step 2: Query ClinVar API using defined parameters and rate limiting
 
-class ClinVarClient:
 
+class ClinVarClient:
     """
     ClinVar API client to return uid for input HGVS, and then fetch esummary
     for each uid. Definded as a class for implementing testing.
     """
 
-    def __init__(self, session: Optional[requests.Session] =
-                 None, rate_limit_sleep: float = NCBI_RATE_LIMIT_SLEEP):
-
+    def __init__(
+        self,
+        session: Optional[requests.Session] = None,
+        rate_limit_sleep: float = NCBI_RATE_LIMIT_SLEEP,
+    ):
         """
         Initiate the API client.
 
@@ -79,13 +80,17 @@ class ClinVarClient:
             resp.raise_for_status()
             return resp.json()
         except RequestException as exc:
-            logger.error("HTTP request failed: url=%s params=%s error=%s",
-                          url, params, exc, exc_info=True)
+            logger.error(
+                "HTTP request failed: url=%s params=%s error=%s",
+                url,
+                params,
+                exc,
+                exc_info=True,
+            )
             # log error but re-raise for caller to handle
             raise
 
     def search_hgvs(self, hgvs: str) -> List[str]:
-
         """
         Search ClinVar for a given HGVS string and return matching UIDs.
 
@@ -106,14 +111,14 @@ class ClinVarClient:
             data = self._get_json(url, params)
             uids = data.get("esearchresult", {}).get("idlist", [])
         except Exception as exc:
-            logger.error("Failed to search ClinVar for %s:"
-            " %s", hgvs, exc, exc_info=True)
+            logger.error(
+                "Failed to search ClinVar for %s: %s", hgvs, exc, exc_info=True
+            )
             return []  # return empty list on fail (logged)
         time.sleep(self.rate_limit_sleep)
         return uids
 
     def fetch_esummary(self, uid: str) -> Dict[str, Any]:
-
         """
         Fetch esummary entry for ClinVar UIDs.
 
@@ -135,15 +140,19 @@ class ClinVarClient:
             data = self._get_json(url, params)
             esum = data.get("result", {}).get(uid, {}) or {}
         except Exception as exc:
-            logger.error("Failed to fetch esummary for UID %s:"
-            " %s", uid, exc, exc_info=True)
+            logger.error(
+                "Failed to fetch esummary for UID %s: %s",
+                uid,
+                exc,
+                exc_info=True,
+            )
             return {}
         time.sleep(self.rate_limit_sleep)
         return esum
 
     def extract_disease_from_trait_set(
-        clin_sig: Dict[str, Any]) -> Dict[str, Optional[str]]:
-
+        clin_sig: Dict[str, Any],
+    ) -> Dict[str, Optional[str]]:
         """
         Extract disease name and OMIM ID from ClinVar trait values.
 
@@ -169,16 +178,23 @@ class ClinVarClient:
 
         trait_set = clin_sig.get("trait_set") or clin_sig.get("traits") or []
         if isinstance(trait_set, list) and trait_set:
-            first_trait = trait_set[0] if isinstance(trait_set[0], dict) else {}
-            disease_name = (first_trait.get("trait_name") or
-                             first_trait.get("name"))
-            xrefs = (first_trait.get("trait_xrefs") or
-                      first_trait.get("xrefs") or [])
+            first_trait = (
+                trait_set[0] if isinstance(trait_set[0], dict) else {}
+            )
+            disease_name = first_trait.get("trait_name") or first_trait.get(
+                "name"
+            )
+            xrefs = (
+                first_trait.get("trait_xrefs")
+                or first_trait.get("xrefs")
+                or []
+            )
             for xref in xrefs:
                 if not isinstance(xref, dict):
                     continue
-                db_source = (xref.get("db_source") or
-                              xref.get("db") or "").upper()
+                db_source = (
+                    xref.get("db_source") or xref.get("db") or ""
+                ).upper()
                 if db_source == "OMIM":
                     disease_mim = xref.get("db_id") or xref.get("id")
                     break
@@ -186,8 +202,8 @@ class ClinVarClient:
         return {"disease_name": disease_name, "disease_mim": disease_mim}
 
     def extract_consensus_and_stars(
-        esummary: Dict[str, Any]) -> Dict[str, Any]:
-
+        esummary: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """
         Extract classification information and map to star rating.
 
@@ -209,8 +225,11 @@ class ClinVarClient:
 
         clin_sig = {}
         if isinstance(esummary, dict):
-            clin_sig = esummary.get("germline_classification") or esummary.get(
-                "clinical_significance") or {}
+            clin_sig = (
+                esummary.get("germline_classification")
+                or esummary.get("clinical_significance")
+                or {}
+            )
 
         classification = clin_sig.get("description")
         review_status_text = clin_sig.get("review_status")
@@ -225,11 +244,20 @@ class ClinVarClient:
                     star_rating = 4
                 elif "expert panel" in normalized:
                     star_rating = 3
-                elif "multiple submitters" in normalized and "no conflicts" in normalized:
+                elif (
+                    "multiple submitters" in normalized
+                    and "no conflicts" in normalized
+                ):
                     star_rating = 2
-                elif "criteria provided" in normalized and "single submitter" in normalized:
+                elif (
+                    "criteria provided" in normalized
+                    and "single submitter" in normalized
+                ):
                     star_rating = 1
-                elif "no assertion criteria provided" in normalized or "no classification provided" in normalized:
+                elif (
+                    "no assertion criteria provided" in normalized
+                    or "no classification provided" in normalized
+                ):
                     star_rating = 0
                 else:
                     star_rating = None
@@ -246,8 +274,10 @@ class ClinVarClient:
 
 # Step 3: Annotate DataFrame with ClinVar data
 
+
 def annotate_dataframe(
-        df: pd.DataFrame, client: ClinVarClient) -> pd.DataFrame:
+    df: pd.DataFrame, client: ClinVarClient
+) -> pd.DataFrame:
     """
     Annotate a DataFrame of variants with ClinVar information.
 
@@ -272,7 +302,7 @@ def annotate_dataframe(
     ValueError
         If the input DataFrame is empty.
     """
-    if 't_hgvs' not in df.columns:
+    if "t_hgvs" not in df.columns:
         logger.error("DataFrame missing required column 't_hgvs'")
         raise KeyError("Input DataFrame must contain 't_hgvs' column")
 
@@ -281,13 +311,19 @@ def annotate_dataframe(
         raise ValueError("No variants to annotate")
 
     out = df.copy()
-    for col in ['clinvar_uid', 'classification', 'review_status_text',
-                 'star_rating', 'disease_name', 'disease_mim']:
+    for col in [
+        "clinvar_uid",
+        "classification",
+        "review_status_text",
+        "star_rating",
+        "disease_name",
+        "disease_mim",
+    ]:
         if col not in out.columns:
             out[col] = None
 
     for idx, row in out.iterrows():
-        hgvs_input = row['t_hgvs']
+        hgvs_input = row["t_hgvs"]
         logger.info("Processing variant: %s", hgvs_input)
         try:
             uids = client.search_hgvs(hgvs_input)
@@ -299,16 +335,17 @@ def annotate_dataframe(
             esummary = client.fetch_esummary(uid)
             extracted = client.extract_consensus_and_stars(esummary)
 
-            out.at[idx, 'clinvar_uid'] = uid
-            out.at[idx, 'classification'] = extracted['classification']
-            out.at[idx, 'review_status_text'] = extracted['review_status_text']
-            out.at[idx, 'star_rating'] = extracted['star_rating']
-            out.at[idx, 'disease_name'] = extracted['disease_name']
-            out.at[idx, 'disease_mim'] = extracted['disease_mim']
+            out.at[idx, "clinvar_uid"] = uid
+            out.at[idx, "classification"] = extracted["classification"]
+            out.at[idx, "review_status_text"] = extracted["review_status_text"]
+            out.at[idx, "star_rating"] = extracted["star_rating"]
+            out.at[idx, "disease_name"] = extracted["disease_name"]
+            out.at[idx, "disease_mim"] = extracted["disease_mim"]
 
         except Exception as exc:
-            logger.warning("Error annotating %s:"
-            " %s", hgvs_input, exc, exc_info=True)
+            logger.warning(
+                "Error annotating %s: %s", hgvs_input, exc, exc_info=True
+            )
             continue
 
     return out
@@ -316,8 +353,12 @@ def annotate_dataframe(
 
 # Step 4: Main function to process input CSV and write output CSV
 
-def process_variants_file(input_csv: Path, client: Optional[ClinVarClient] =
-                          None, output_name: str = "anno_data.csv") -> Path:
+
+def process_variants_file(
+    input_csv: Path,
+    client: Optional[ClinVarClient] = None,
+    output_name: str = "anno_data.csv",
+) -> Path:
     """
     Read variant CSV, annotate using ClinVar, and write to output CSV.
 
@@ -344,8 +385,9 @@ def process_variants_file(input_csv: Path, client: Optional[ClinVarClient] =
     try:
         df = pd.read_csv(input_csv)
     except Exception as e:
-        logger.error("Failed to read input CSV %s: %s",
-                      input_csv, e, exc_info=True)
+        logger.error(
+            "Failed to read input CSV %s: %s", input_csv, e, exc_info=True
+        )
         raise
 
     annotated = annotate_dataframe(df, client)
@@ -355,7 +397,11 @@ def process_variants_file(input_csv: Path, client: Optional[ClinVarClient] =
         annotated.to_csv(output_csv, index=False)
         logger.info("Annotations written to %s", output_csv)
     except Exception as e:
-        logger.error("Failed to write annotated CSV"
-        " %s: %s", output_csv, e, exc_info=True)
+        logger.error(
+            "Failed to write annotated CSV %s: %s",
+            output_csv,
+            e,
+            exc_info=True,
+        )
         raise
     return output_csv
