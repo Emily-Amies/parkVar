@@ -10,10 +10,13 @@ __pycache__/
 *.egg
 
 # Tests
-tests/
+#tests/
 
 # Data directory
 data/
 
 # Logs
 logs/ 
+
+# VSCode settings
+.vscode/
