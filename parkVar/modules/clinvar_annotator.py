@@ -9,6 +9,9 @@ from requests import RequestException
 from parkVar.utils.logger_config import logger
 
 # Step 1: Define constants for ClinVar API
+"""Currently queries single HGVS at a time, could
+be extended to batch queries in future versions.
+"""
 
 EUTILS_BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 NCBI_RATE_LIMIT_SLEEP = 0.34  # ~3 requests/sec as per NCBI
@@ -295,6 +298,10 @@ def annotate_dataframe(
         'clinvar_uid', 'classification', 'review_status_text', 'star_rating',
         'disease_name', 'disease_mim'.
 
+    currently only returns first ClinVar UID match for each HGVS, with more
+    time we would implement option for handling multiple UIDs
+    (Such as choosing highest star rating etc)
+
     Raises
     ------
     KeyError
@@ -320,7 +327,7 @@ def annotate_dataframe(
         "disease_mim",
     ]:
         if col not in out.columns:
-            out[col] = None
+            out[col] = "annotation failed"
 
     for idx, row in out.iterrows():
         hgvs_input = row["t_hgvs"]
