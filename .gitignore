@@ -5,6 +5,11 @@ __pycache__/
 # Ruff cache
 .ruff_cache/
 
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
 # Egg metadata
 *.egg-info/
 *.egg

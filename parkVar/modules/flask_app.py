@@ -125,7 +125,7 @@ def annotate_data():
             ''',
             msg=user_msg
         ), 400
-    
+
     # Annotate variants
     try:
         process_variants_file(validator_path)
