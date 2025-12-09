@@ -15,10 +15,13 @@ htmlcov/
 *.egg
 
 # Tests
-tests/
+#tests/
 
 # Data directory
 data/
 
 # Logs
-logs/
+logs/ 
+
+# VSCode settings
+.vscode/
