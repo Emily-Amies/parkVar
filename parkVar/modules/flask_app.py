@@ -16,19 +16,20 @@ Notes:
 - Templates are injected via render_template_string and stored in flask_utils
 """
 
-from flask import (
-    Flask,
-    request,
-    render_template_string,
-    redirect,
-    url_for,
-)
 from pathlib import Path
 
-from parkVar.utils import flask_utils
-from parkVar.utils import upload_helpers as uploads
+from flask import (
+    Flask,
+    redirect,
+    render_template_string,
+    request,
+    url_for,
+)
+
 from parkVar.utils import anno_helpers as anno
 from parkVar.utils import filter_helpers as filters
+from parkVar.utils import flask_utils
+from parkVar.utils import upload_helpers as uploads
 from parkVar.utils.logger_config import logger
 
 # Create Flask object
@@ -99,7 +100,7 @@ def upload():
     logger.info("Data directory created")
 
     # CHECK IF FILE HAS ALREADY BEEN UPLOADED
-    filenames = uploads._check_existing_files(file, data_dir)
+    uploads._check_existing_files(file, data_dir)
 
     # STORE DATA AS CSV
     uploads._write_to_csv(data_dir, file, df)
@@ -151,7 +152,7 @@ def refresh_session(data_dir):
 @app.route("/refresh", methods=["POST"])
 def refresh_route():
     """
-    Flask route that clears the temporary data directory and refreshes the 
+    Flask route that clears the temporary data directory and refreshes the
     session.
 
     Returns
@@ -171,7 +172,7 @@ def refresh_route():
 @app.route("/annotate", methods=["POST"])
 def annotate_data():
     """
-    Validate and annotate uploaded variant data, then render the annotated 
+    Validate and annotate uploaded variant data, then render the annotated
     table.
 
     Workflow

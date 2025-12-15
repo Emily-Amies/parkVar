@@ -16,8 +16,8 @@ Notes:
 """
 
 from flask import render_template_string
-from parkVar.utils.logger_config import logger
 
+from parkVar.utils.logger_config import logger
 
 ########################################################################
 # HTML Templates
@@ -86,8 +86,11 @@ UPLOAD_ANNO_TEMPLATE = (
         <button type='submit' id='annotate-btn'>Annotate</button>
         </form>
 
-        <p id='annotating-msg' style='display:none; color: red; margin-top:1rem;'>
-        Annotating variants, this may take a few seconds...
+        <p
+            id='annotating-msg'
+            style='display:none; color:red; margin-top:1rem;'
+        >
+            Annotating variants, this may take a few seconds...
         </p>
 
         <script>

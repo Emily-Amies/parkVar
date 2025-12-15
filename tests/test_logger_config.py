@@ -12,6 +12,7 @@ Covers validation of:
 """
 
 import pytest
+
 from parkVar.utils import logger_config as log_setup
 
 
@@ -45,7 +46,7 @@ class TestSetupLoggerValidation:
 
     @pytest.mark.parametrize("maxbytes", ["abc", None, 0, -1, -500])
     def test_invalid_maxbytes(self, maxbytes):
-        """setup_logger raises ValueError when maxBytes is not a positive 
+        """setup_logger raises ValueError when maxBytes is not a positive
         integer."""
         # maxBytes must be a positive integer
         with pytest.raises(ValueError):
@@ -53,7 +54,7 @@ class TestSetupLoggerValidation:
 
     @pytest.mark.parametrize("backupcount", ["abc", None, -1, -3])
     def test_invalid_backupcount(self, backupcount):
-        """setup_logger raises ValueError when backupCount is negative or 
+        """setup_logger raises ValueError when backupCount is negative or
         invalid."""
 
         # backupCount must be a non negative integer

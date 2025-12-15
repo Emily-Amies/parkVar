@@ -13,14 +13,14 @@ Notes:
 - Raises custom Flask-aware exceptions defined in flask_utils.
 """
 
-from pathlib import Path
 
 import pandas as pd
 
+from parkVar.modules.clinvar_annotator import process_variants_file
+from parkVar.modules.validate import validate_variants
 from parkVar.utils import flask_utils
 from parkVar.utils.logger_config import logger
-from parkVar.modules.validate import validate_variants
-from parkVar.modules.clinvar_annotator import process_variants_file
+
 
 def _validate(input_path, validator_path):
     """
@@ -40,7 +40,7 @@ def _validate(input_path, validator_path):
     flask_utils.ProcessError
         If validation fails for any reason.
     """
-    
+
     # Check input file exists
     if not input_path.exists():
         raise flask_utils.MissingFileError(

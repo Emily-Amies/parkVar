@@ -19,7 +19,7 @@ from parkVar.utils import flask_utils
 
 class TestValidate:
     """Tests for _validate"""
-    
+
     def test_validate_raises_missingfileerror_when_input_missing(
         self, tmp_path
     ):
@@ -38,14 +38,14 @@ class TestValidate:
 
     def test_validate_raises_processerror_on_bad_input(self, tmp_path):
         """_validate wraps underlying failures in a ProcessError."""
-        # Create an invalid file that will make pandas in the validate 
+        # Create an invalid file that will make pandas in the validate
         # script crash normally
         input_path = tmp_path / "input_data.csv"
         input_path.write_bytes(b"\x00\xff\x00\xff not csv")
 
         validator_path = tmp_path / "validated_data.csv"
 
-        # Validate_variants should raise an error, which is caught by 
+        # Validate_variants should raise an error, which is caught by
         # _validate
         with pytest.raises(flask_utils.ProcessError) as excinfo:
             anno._validate(input_path, validator_path)
@@ -62,7 +62,6 @@ class TestAnnotate:
     ):
         """_annotate raises MissingFileError if validated_data.csv missing."""
         validate_path = tmp_path / "validated_data.csv"
-        anno_path = tmp_path / "anno_data.csv"
 
         # As validate_data.csv doesn't exist, an error should be raised
         with pytest.raises(flask_utils.MissingFileError) as excinfo:
@@ -75,14 +74,12 @@ class TestAnnotate:
 
     def test_annotate_raises_processerror_on_bad_input(self, tmp_path):
         """_annotate wraps underlying failures in a ProcessError."""
-        # Create an invalid file that will make pandas in the annotate script 
+        # Create an invalid file that will make pandas in the annotate script
         # crash normally
         validate_path = tmp_path / "validated_data.csv"
         validate_path.write_bytes(b"\x00\xff\x00\xff not csv")
 
-        anno_path = tmp_path / "anno_data.csv"
-
-        # Annotateprocess_variants_file should raise an error, which is caught 
+        # Annotateprocess_variants_file should raise an error, which is caught
         # by _validate
         with pytest.raises(flask_utils.ProcessError) as excinfo:
             anno._annotate(validate_path)
@@ -93,7 +90,7 @@ class TestAnnotate:
 
 @pytest.fixture
 def app():
-    """Flask app fixture used to provide an application context for template 
+    """Flask app fixture used to provide an application context for template
     rendering."""
     app = Flask(__name__)
     return app
@@ -105,7 +102,7 @@ class TestBuildTable:
     def test_build_table_raises_missingfileerror_if_file_missing(
         self, tmp_path
     ):
-        """_build_table raises MissingFileError if anno_data.csv is 
+        """_build_table raises MissingFileError if anno_data.csv is
         missing."""
         anno_path = tmp_path / "anno_data.csv"
 
@@ -117,7 +114,7 @@ class TestBuildTable:
 
     def test_build_table_raises_csvreaderror_on_read_failure(self, tmp_path):
         """_build_table raises CSVReadError if the CSV cannot be read."""
-        # Create an invalid file that will make pandas in the annotate script 
+        # Create an invalid file that will make pandas in the annotate script
         # crash normally
         anno_path = tmp_path / "anno_data.csv"
         anno_path.write_bytes(b"\x00\xff\x00\xff not csv")
@@ -130,7 +127,7 @@ class TestBuildTable:
         assert "anno_data.csv" in str(excinfo.value)
 
     def test_build_table_returns_df_and_html_on_success(self, tmp_path, app):
-        """_build_table returns a DataFrame and HTML table when given 
+        """_build_table returns a DataFrame and HTML table when given
         valid CSV."""
 
         # Create a dummy CSV

@@ -16,7 +16,6 @@ from flask import Flask, url_for
 from parkVar.modules import flask_app
 
 
-
 @pytest.fixture
 def app():
     """Minimal Flask app with a dummy /upload route for testing redirects."""
@@ -33,7 +32,7 @@ def app():
 
 
 def test_refresh_session_deletes_files_and_redirects(app, tmp_path):
-    """refresh_session removes all files in the data directory and redirects 
+    """refresh_session removes all files in the data directory and redirects
     to /upload."""
     # Create some dummy files in a temporary directory
     f1 = tmp_path / "file1.txt"

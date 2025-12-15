@@ -18,13 +18,15 @@ Notes:
 """
 
 
-from pathlib import Path
 import io
+from pathlib import Path
+
 import pandas as pd
-from flask import Request, flash, render_template_string
+from flask import flash, render_template_string
 
 from parkVar.utils import flask_utils
 from parkVar.utils.logger_config import logger
+
 
 def _upload_file(request):
     """

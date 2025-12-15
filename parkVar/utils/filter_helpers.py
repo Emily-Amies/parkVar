@@ -14,10 +14,9 @@ Notes:
 - Integrates with Flask templates defined in flask_utils.
 """
 
-from pathlib import Path
 
 import pandas as pd
-from flask import request, render_template_string
+from flask import render_template_string, request
 
 from parkVar.utils import flask_utils
 from parkVar.utils.logger_config import logger
@@ -126,7 +125,7 @@ def _show_filter_page(df, filtered_df, selected_ids, applied_text):
     str
         Rendered HTML containing the checkbox form and filtered table.
     """
-    
+
     # Rebuild checkbox values so the page can re-render them
     patient_ids = sorted(
         df["Patient_ID"].astype(str).dropna().unique().tolist()

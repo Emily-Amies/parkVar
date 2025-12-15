@@ -94,7 +94,7 @@ class TestCreatePandasDataframe:
         assert df["col2"].tolist() == [2, 4]
 
     def test_overwrites_existing_patient_id_with_filename(self):
-        """Existing Patient_ID column is replaced by one derived from 
+        """Existing Patient_ID column is replaced by one derived from
         filename."""
 
         # Create dummy CSV
@@ -165,7 +165,7 @@ def app_exist(tmp_path):
 class TestCheckExistingFiles:
     """Tests for _check_existing_files."""
     def test_first_upload_creates_file_and_returns_none(self, app_exist):
-        """First upload creates uploaded_files.txt and returns None with no 
+        """First upload creates uploaded_files.txt and returns None with no
         flashes."""
 
         app_exist, data_dir = app_exist
@@ -296,7 +296,7 @@ class TestWriteToCsv:
             assert ("info", "Uploaded test.csv") in flashed
 
     def test_appends_to_existing_csv(self, app_write):
-        """Subsequent writes append rows without duplicating headers and 
+        """Subsequent writes append rows without duplicating headers and
         flash info."""
 
         app_write, data_dir = app_write

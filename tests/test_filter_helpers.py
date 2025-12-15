@@ -10,8 +10,8 @@ Covers:
 - rendering the filter page with checkboxes and table output
 """
 
-import pytest
 import pandas as pd
+import pytest
 from flask import Flask
 
 from parkVar.utils import filter_helpers as filters
@@ -65,7 +65,7 @@ class TestFilterDf:
     """Tests for _filter_df"""
 
     def test_filter_df_raises_missingcolumnerror(self, tmp_path, app_filter):
-        """_filter_df raises MissingColumnError if Patient_ID column is 
+        """_filter_df raises MissingColumnError if Patient_ID column is
         missing."""
         # Create dummy pandas dataframe
         df = pd.DataFrame({"X": [1, 2]})
@@ -80,7 +80,7 @@ class TestFilterDf:
         assert "Patient_ID" in str(excinfo.value)
 
     def test_filter_df_filters_selected_ids(self, tmp_path, app_filter):
-        """_filter_df returns only rows matching selected Patient_ID 
+        """_filter_df returns only rows matching selected Patient_ID
         values."""
         # Create dummy pandas dataframe
         df = pd.DataFrame(
@@ -110,7 +110,7 @@ class TestFilterDf:
     def test_filter_df_no_selected_ids_returns_full_df(
         self, tmp_path, app_filter
     ):
-        """_filter_df returns full DataFrame and message when no IDs 
+        """_filter_df returns full DataFrame and message when no IDs
         selected."""
         # Create dummy pandas dataframe
         df = pd.DataFrame(
@@ -138,7 +138,7 @@ class TestShowFilterPage:
     """Tests for _show_filter_page"""
 
     def test_show_filter_page_renders_page(self, app_filter):
-        """_show_filter_page returns HTML containing table and Patient_ID 
+        """_show_filter_page returns HTML containing table and Patient_ID
         checkboxes."""
         # Create dummy pandas dataframe
         df = pd.DataFrame(

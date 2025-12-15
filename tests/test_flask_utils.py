@@ -30,7 +30,7 @@ class TestCreateTable:
     """Tests for create_table"""
 
     def test_create_table_renders_row_count_and_table(self, app):
-        """create_table returns HTML containing row count, table markup 
+        """create_table returns HTML containing row count, table markup
         and data."""
         # Create a dummy dataframe
         df = pd.DataFrame({"col1": [1, 2], "col2": ["a", "b"]})
@@ -54,7 +54,7 @@ class TestCreateTable:
         assert "b" in html
 
     def test_create_table_handles_empty_dataframe(self, app):
-        """create_table still renders correct structure when DataFrame 
+        """create_table still renders correct structure when DataFrame
         is empty."""
 
         # Create a dummy dataframe
@@ -123,7 +123,7 @@ class TestShowCheckboxes:
         assert "checked" in html
 
     def test_show_checkboxes_raises_if_patient_id_missing(self, app):
-        """show_checkboxes raises MissingColumnError if Patient_ID is 
+        """show_checkboxes raises MissingColumnError if Patient_ID is
         absent."""
 
         # Create a dummy dataframe
