@@ -5,9 +5,17 @@ __pycache__/
 # Ruff cache
 .ruff_cache/
 
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
 # Egg metadata
 *.egg-info/
 *.egg
+
+# Tests
+#tests/
 
 # Data directory
 data/
@@ -17,3 +25,5 @@ logs/
 
 # Coverage
 .coverage
+# VSCode settings
+.vscode/

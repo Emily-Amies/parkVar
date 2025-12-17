@@ -171,43 +171,57 @@ def refresh_route():
 
 @app.route("/annotate", methods=["POST"])
 def annotate_data():
-    """
-    Validate and annotate uploaded variant data, then render the annotated
-    table.
+    data_dir = Path(__file__).resolve().parent.parent.parent / 'data'
+    input_path = data_dir / 'input_data.csv'
+    validator_path = data_dir / 'validated_data.csv'
+    anno_path = data_dir / 'anno_data.csv'
 
-    Workflow
-    --------
-    1. Read the validated input CSV from the data directory.
-    2. Run validation.
-    3. Run annotation.
-    4. Build an HTML table of annotated data.
-    5. Render the checkbox view for downstream filtering.
+    # Validate variants
+    try:
+        validate_variants(input_path, validator_path)
+    except Exception as e:
+        logger.error('Validation failed')
+        user_msg = f'Validation failed: {e}'
 
-    Returns
-    -------
-    str
-        Rendered HTML for the annotation / filter selection page.
-    """
+        # return an HTML response with 400 (bad request)
+        return render_template_string(
+            '''
+            <h2 style="color:crimson;">{{ msg }}</h2>
+            <p><a href="/">⬅ Back to upload</a></p>
+            ''',
+            msg=user_msg
+        ), 400
 
-    data_dir = Path(__file__).resolve().parent.parent.parent / "data"
-    input_path = data_dir / "input_data.csv"
-    validator_path = data_dir / "validated_data.csv"
-    anno_path = data_dir / "anno_data.csv"
+    # Annotate variants
+    try:
+        process_variants_file(validator_path)
+    except Exception as e:
+        logger.error('Annotation failed')
+        user_msg = f'Annotation failed: {e}'
 
-    # VALIDATE DATA
-    anno._validate(input_path, validator_path)
-    logger.info("Validator script run sucessfully")
+        # return an HTML response with 400 (bad request)
+        return render_template_string(
+            '''
+            <h2 style="color:crimson;">{{ msg }}</h2>
+            <p><a href="/">⬅ Back to upload</a></p>
+            ''',
+            msg=user_msg
+        ), 400
 
-    # ANNOTATE DATA
-    anno._annotate(validator_path)
-    logger.info("Annotator script run sucessfully")
 
-    # BUILD HTML TABLE
-    df, table_html = anno._build_table(anno_path)
-    logger.info("Annotated table built")
+    if not anno_path.exists():
+        return 'Annotated file not found. Did the annotation step run?', 400
 
-    # SHOW ANNOTATED DATA AND CHECKBOXES FOR FILTERING
-    return flask_utils.show_checkboxes(df, table_html)
+    try:
+        df = pd.read_csv(anno_path)
+    except Exception as e:
+        logger.error(f'Failed to read anno_data.csv: {e}')
+        return f'Failed to read anno_data.csv: {e}', 500
+
+    logger.info(f'Loaded annotated data with {len(df)} rows')
+
+    # build HTML table
+    table_html = flask_utils.create_table(df)
 
 
 ############################################################################
