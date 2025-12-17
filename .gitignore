@@ -23,5 +23,7 @@ data/
 # Logs
 logs/ 
 
+# Coverage
+.coverage
 # VSCode settings
 .vscode/

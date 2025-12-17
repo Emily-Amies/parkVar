@@ -10,7 +10,6 @@ if __name__ == '__main__':
     if os.path.isdir(data_dir):
         shutil.rmtree(data_dir)
 
-
     # Create a logs directory if one doesn't exist. This is because it is not
     # included in the GitHub repo
     log_dir = '../logs'
@@ -23,3 +22,7 @@ if __name__ == '__main__':
 
     # Run the app
     app.run(host='127.0.0.1', port=5000, debug=True)
+
+
+    # lsof -i :5000
+    # kill -9 <id>
