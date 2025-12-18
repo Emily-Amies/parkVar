@@ -12,7 +12,7 @@ if __name__ == '__main__':
     #     shutil.rmtree(data_dir)
 
     # Delete all files in the temporary data directory
-    data_dir = Path(__file__).resolve().parent.parent.parent / "data"
+    data_dir = Path(__file__).resolve().parent.parent / "data"
 
     for item in data_dir.glob("*"):
         try:
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     from parkVar.modules.flask_app import app
 
     # Run the app
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    app.run(host='127.0.0.1', port=5000)
 
 
     # lsof -i :5000
