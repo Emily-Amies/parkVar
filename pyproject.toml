@@ -21,8 +21,6 @@ version = { attr = 'parkVar.__version__' }
 dependencies = { file = ['requirements.txt'] }
 
 
-
-
 [tool.ruff]
 # Target Python version for compatibility
 target-version = "py313"
