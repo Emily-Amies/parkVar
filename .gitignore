@@ -21,9 +21,11 @@ htmlcov/
 data/
 
 # Logs
-logs/ 
+logs/
 
 # Coverage
 .coverage
 # VSCode settings
 .vscode/
+
+build/
