@@ -8,7 +8,7 @@ import requests
 
 import parkVar.modules.validate as validate
 
-TEST_DATA_DIR = Path("tests") / "test_data"
+TEST_DATA_DIR = Path(__file__).resolve().parent / "test_data"
 
 
 @pytest.fixture
