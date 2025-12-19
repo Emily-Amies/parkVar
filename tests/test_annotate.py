@@ -65,8 +65,8 @@ def test_annotate_dataframe_with_mock_client(sample_esummary):
     mock_client.search_hgvs.side_effect = [["11111"], []]
     mock_client.fetch_esummary.return_value = sample_esummary
     # use clinsig extractor method from client
-    mock_client.extract_consensus_and_stars = {
-        annotate.ClinVarClient.extract_consensus_and_stars}
+    mock_client.extract_consensus_and_stars = (
+        annotate.ClinVarClient.extract_consensus_and_stars)
 
     out = annotate.annotate_dataframe(df, mock_client)
     # first row should be annotated
@@ -98,15 +98,15 @@ def test_process_variants_file_reads_and_writes(tmp_path, sample_esummary):
     mock_client = MagicMock(spec=annotate.ClinVarClient)
     mock_client.search_hgvs.return_value = ["22222"]
     mock_client.fetch_esummary.return_value = sample_esummary
-    mock_client.extract_consensus_and_stars = {
-        annotate.ClinVarClient.extract_consensus_and_stars}
+    mock_client.extract_consensus_and_stars = (
+        annotate.ClinVarClient.extract_consensus_and_stars)
 
     out_path = annotate.process_variants_file(
         in_csv, client=mock_client, output_name="out.csv")
     assert out_path.exists()
     out_df = pd.read_csv(out_path)
     assert "clinvar_uid" in out_df.columns
-    assert out_df.loc[0, "clinvar_uid"] == "22222"
+    assert str(out_df.loc[0, "clinvar_uid"]) == "22222"
 
 
 def test_search_hgvs_returns_empty_on_exception_and_logs(caplog):

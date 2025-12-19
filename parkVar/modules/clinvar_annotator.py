@@ -153,6 +153,7 @@ class ClinVarClient:
         time.sleep(self.rate_limit_sleep)
         return esum
 
+    @staticmethod
     def extract_disease_from_trait_set(
         clin_sig: Dict[str, Any],
     ) -> Dict[str, Optional[str]]:
@@ -204,6 +205,7 @@ class ClinVarClient:
 
         return {"disease_name": disease_name, "disease_mim": disease_mim}
 
+    @staticmethod
     def extract_consensus_and_stars(
         esummary: Dict[str, Any],
     ) -> Dict[str, Any]:
@@ -342,7 +344,7 @@ def annotate_dataframe(
             esummary = client.fetch_esummary(uid)
             extracted = client.extract_consensus_and_stars(esummary)
 
-            out.at[idx, "clinvar_uid"] = uid
+            out.at[idx, "clinvar_uid"] = str(uid)
             out.at[idx, "classification"] = extracted["classification"]
             out.at[idx, "review_status_text"] = extracted["review_status_text"]
             out.at[idx, "star_rating"] = extracted["star_rating"]
