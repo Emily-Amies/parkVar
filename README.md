@@ -61,7 +61,7 @@ You can install `parkVar` manually using a Python environment or via Docker.
 
 ### Docker Installation
 
-To run this app in a Docker container (see [Docker installation section of the INSTALLATION.md](INSTALLATION.md) for more detail):
+To run this app in a Docker container (see [Docker installation section of the INSTALLATION.md](docs/INSTALLATION.md) for more detail):
 
 1. Ensure that:
     - Docker is installed on your machine
