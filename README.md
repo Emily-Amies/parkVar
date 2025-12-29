@@ -75,7 +75,7 @@ To run this app in a Docker container (see [Docker installation section of the I
 docker compose up -d --build
 ```
 
-3. The container should now be up running, which you can check using:
+3. The container should now be up and running, which you can check using:
 
 ```bash
 docker ps
