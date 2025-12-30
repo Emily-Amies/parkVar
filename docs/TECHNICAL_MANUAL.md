@@ -81,7 +81,7 @@ The figure below shows the flow of data through the app and options available to
 # Variant validation
 Variant validation and gathering of valid variant descriptions (e.g. HGVSg, HGVSc, HGVSp, HGNC ID and symbol etc) is performed via the [validate.py](../parkVar/modules/validate.py) module. To do so, the module:
 
-1. Reads variant data from a CSV file containing '#CHROM', 'POS', 'REF' and 'ALT' columns and initialises a DataFrame using this columns form the input CSV as well as additional columns to contain further variant descriptions/annotation gathered by this module.
+1. Reads variant data from a CSV file containing '#CHROM', 'POS', 'REF' and 'ALT' columns and initialises a DataFrame using these columns form the input CSV as well as additional columns to contain further variant descriptions/annotation gathered by this module.
 2. Calls the Variant Validator API for each variant in the Dataframe.
 3. Parses and validates the API responses, extracting key fields such as genomic/transcript/protein HGVS, gene symbol, and HGNC ID etc.
 4. Updates the DataFrame with validated values where possible.
