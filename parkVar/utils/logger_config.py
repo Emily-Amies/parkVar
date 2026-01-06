@@ -100,4 +100,4 @@ def setup_logger(
     return logger
 
 
-logger = setup_logger("parkVar_logger")
+logger = setup_logger("parkVar_logger",file_level=20, stream_level=30)
