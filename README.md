@@ -105,10 +105,10 @@ conda activate parkvar_env
 
 2. **Start the application**
 
-From `parkVar` run the main script.
+From the project root run the main script.
 
 ```bash
-python main.py
+python -m parkVar.main
 ```
 
 3. **Open the web interface**
