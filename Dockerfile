@@ -9,6 +9,8 @@ COPY . ./
 
 RUN pip install --no-cache-dir .
 
+USER appuser
+
 EXPOSE 5000
 
 VOLUME ["/data", "/logs"]
