@@ -16,7 +16,7 @@ Once processing is complete, the results are displayed in a table within the web
 
 The application accepts a single input file in CSV format containing variant data.
 
-Direct upload of VCF files is not supported. This is an intentional design decision, as GATK recommends [against parsing VCFs](https://gatk.broadinstitute.org/hc/en-us/articles/360035531692-VCF-Variant-Call-Format) and instead advises converting them into tab or comma-delimited formats using tools such as `VariantsToTable`.
+Direct upload of VCF files is not supported. This is an intentional design decision, as the developers of GATK recommends [against parsing VCFs](https://gatk.broadinstitute.org/hc/en-us/articles/360035531692-VCF-Variant-Call-Format) and instead advises converting them into tab or comma-delimited formats using tools such as `VariantsToTable`.
 
 Users should therefore convert VCF files to CSV prior to upload. Guidance on VCF conversion can be found in the [GATK documentation](https://gatk.broadinstitute.org/hc/en-us/articles/360036711531-VariantsToTable).
 
