@@ -1,0 +1,24 @@
+{
+    "g_hgvs": "NC_000017.11:g.50198002C>A",
+    "genomic_variant_error": null,
+    "hgvs_t_and_p": {
+      "NM_000088.4": {
+        "gap_statement": null,
+        "gapped_alignment_warning": null,
+        "gene_info": {
+          "hgnc_id": "HGNC:2197",
+          "symbol": "COL1A1"
+        },
+        "p_hgvs_slc": "NP_000079.2:p.(G197C)",
+        "p_hgvs_tlc": "NP_000079.2:p.(Gly197Cys)",
+        "select_status": {
+          "mane_select": true
+        },
+        "t_hgvs": "NM_000088.4:c.589G>T",
+        "transcript_variant_error": null,
+        "transcript_version_warning": null
+      }
+    },
+    "p_vcf": "17-50198002-C-A",
+    "selected_build": "GRCh38"
+}

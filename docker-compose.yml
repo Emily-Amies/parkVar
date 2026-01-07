@@ -1,0 +1,11 @@
+services:
+  parkvar:
+    build: .
+    image: parkvar:prod
+    container_name: parkvar_prod
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data:rw
+      - ./logs:/app/logs:rw
+    restart: unless-stopped
