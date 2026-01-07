@@ -1,11 +1,11 @@
 
 # For The Assessors
 
-## Group Members
+**Group Members**
 
-ANDREW JORDAN - A-MJordan
-EMILY AMIES - “Ubuntu”, Emily-Amies
-GREG ROWLAND - growland2
+- ANDREW JORDAN - A-MJordan
+- EMILY AMIES - “Ubuntu”, Emily-Amies
+- GREG ROWLAND - growland2
 
 All group members contributed to the documentation equally.
 
