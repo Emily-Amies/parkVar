@@ -42,6 +42,11 @@ To install the app on the local environment, from the project repository root:
 
 	pip install . 
 
+### Alternative: Developer installation
+To install editable (for developer purposes and to check test coverage etc.), from project repository root:
+
+    pip install -e .
+
 ### Launch the App
 
 To launch the Flask App, run the following from the project repository root:
