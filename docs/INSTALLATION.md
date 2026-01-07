@@ -1,8 +1,58 @@
 
-# Manual installation
+# Installation Guide
 
+parkVar can be installed and run manually in a local Python environment, or launched via a Docker container. This document will cover the process for launching the app using both methods.
 
-# Docker installation
+## Local Installation
+
+### Requirements
+
+- Python 3.13 (or compatible distribution)
+- pip
+- Conda or Miniconda for creating environment and gathering based on requirements (recommended) or local venv
+- Git
+
+### Clone Latest Repository 
+
+To clone the latest repository 
+
+    git clone https://github.com/Emily-Amies/parkVar.git parkvar-1
+    cd parkVar-1
+
+### Create Local Environment
+
+#### Recommended: Create conda environment
+
+Create environment from YAML file, and activate that environment. from project repository root, run the following:
+
+    conda env create -f environment.yml
+    conda activate parkvar_env
+
+#### Alternative: Create venv using pip
+
+Create fresh venv and install dependencies from requirements.txt using pip
+
+    python -m venv .venv
+    source .venv/bin/activate
+    pip install --upgrade pip
+    pip install -r requirements.txt
+
+### Install parkVar
+To install the app on the local environment, from the project repository root:
+
+	pip install . 
+
+### Launch the App
+
+To launch the Flask App, run the following from the project repository root:
+
+    python -m parkVar.main
+
+The main python script expects the data and logs folders to be located at the repository root level, running the app from a different location may cause errors.
+
+If you encounter the error "ModuleNotFoundError: No module names 'parkVar'" ensure you are running the main script from the repository root, if the error continues try installing editable to ensure the package is on the path (see previous section).
+
+## Docker installation
 
 To run this app in a Docker container, whilst in the app's root directory run:
 

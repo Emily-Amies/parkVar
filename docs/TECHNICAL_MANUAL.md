@@ -94,3 +94,26 @@ python -m parkVar.modules.validate <input_csv_path> <output_csv_path>
 ```
 
 # Variant annotation
+The clinvar_annotator.py module handles the variant annotation stage of the workflow and is comprised of the following main steps:
+
+1. Defining the inputs and constants for use in future steps
+
+* EUTILS_BASE sets the base entrez URL for querying ClinVar via the eutils API route.
+
+* NCBI_RATE_LIMIT_SLEEP defines a delay period between API requests to adhere to the 3 requests per second limit set by NCBI.
+
+* REVIEW_STATUS_TO_STARS converts the textual review status for each clinical submission (as determined through the returned JSON) into a the "star rating" that is displayed on the ClinVar website.
+
+2. Using the HGVS description of each called variant output from the validate.py module, ClinVar is queried to generate the associated UID, which is appended to the EUTILS_BASE URL to search for and retrieve the ClinVar esummary and extract the required fields.
+
+* search_hgvs takes the HGVS field from the output_csv from validate.py and returns the first matching ClinVar UID (or an empty field if no match/error)
+
+* fetch_esummary takes the returned ClinVar UID and appends it onto the EUTILS_BASE URL, then using the "/esummary.fcgi" returns the associated ClinVar esummary in JSON format (line 141: "retmode": "json" - can be altered for different return format, but JSON is preferrable).
+
+* extract_disease_from_trait_set pulls the associated disease name and OMIM ID from the first ClinVar submission. May want to expand these sections in future to account for multiple ClinVar submissions, or incorporate key terms to limit data to Parkinsons associated traits.
+
+* extract_consensus_and_stars pulls the textual clinical significance data from the esummary, and uses the REVIEW_STATUS_TO_STARS definitions to assign the appropriate star rating. Due to changes in the ClinVar esummaries in ~2021, which moved from a single "clinical_significance" field, to two fields split based on oncological vs germline implications (which will appear mutually exclusively depending on the last time the submission was updated), this function will search for both "germline_classification" for newer submissions, and "clinical_significance" for legacy entries.
+
+3. The data extracted from the previous step is used to repopulate the output_csv dataframe from the validate.py module including the ClinVar annotation information. 
+
+4. This is the main logic for this module that pulls all the previous functions into functions that can be called from the flask_app.py module as part of the parkVar.main workflow
