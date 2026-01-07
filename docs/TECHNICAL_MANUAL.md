@@ -1,4 +1,4 @@
-<span style="font-size: 2em; font-weight: bold;">TECHNICAL MANUAL</span>
+# TECHNICAL MANUAL
 
 The design intentionally separates tasks across three components:
 
