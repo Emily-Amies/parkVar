@@ -174,3 +174,19 @@ Feedback:
 * Ability to filter columns would also help with data readability
 * Persistence of data would be the biggest requirement moving forward
 * Ability to upload and annotate multiple CSVs at a time would be beneficial
+
+## Trello
+
+We used Trello to record user requirements and feedback. These were assigned to individual members of the team which enabled us to monitor progress through each sprint. Screenshots of our Kanban board are below:
+
+**In Progress**
+
+![Trello board](./images/trello.png)
+
+
+**Completed**
+
+![Trello board completed](./images/trello_dump.png)
+
+
+
