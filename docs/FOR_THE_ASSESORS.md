@@ -186,7 +186,7 @@ We used Trello to record user requirements and feedback. These were assigned to 
 
 **Completed**
 
-![Trello board completed](./images/trello_dump.png)
+![Trello board completed](./images/trello_done.png)
 
 
 
