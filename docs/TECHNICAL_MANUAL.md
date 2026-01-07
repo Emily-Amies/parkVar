@@ -76,7 +76,7 @@ The figure below shows the flow of data through the app and options available to
    - The **Annotate** button is no longer available.
    - The **Filter** and **Refresh Session** buttons remain available.
 
-![Flowchart showing organisation of the flask app](images/flow.png)
+![Flowchart showing organisation of the flask app](images/flow.png){width=35%}
 
 # Variant validation
 Variant validation and gathering of valid variant descriptions (e.g. HGVSg, HGVSc, HGVSp, HGNC ID and symbol etc) is performed via the [validate.py](../parkVar/modules/validate.py) module. To do so, the module:
