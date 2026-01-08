@@ -1,4 +1,4 @@
-# TECHNICAL MANUAL
+# Technical Manual
 
 The design intentionally separates tasks across three components:
 
