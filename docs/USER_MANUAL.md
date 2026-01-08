@@ -45,7 +45,7 @@ The results table supports filtering by patient, allowing users to focus on vari
 
 ## Standard workflow
 
-1. Upload one or more CSV files using the **Upload** button.
+1. Upload one or more CSV files using the **Upload** button. The interface will display the latest uploaded file.
 2. Click **Annotate** to validate and annotate the variants.
    This step may take some time, depending on the number of variants and API response times.
 
