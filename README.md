@@ -1,5 +1,3 @@
-<span style="font-size: 2em; font-weight: bold;">README</span>
-
 # parkVar
 
 A tool that validates variants and annotates them with metadata from ClinVar.
