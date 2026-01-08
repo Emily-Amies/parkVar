@@ -141,6 +141,7 @@ Contributions are welcome. If you would like to add features, fix bugs, or impro
 
 1. **Fork the repository** on GitHub.
 <br>
+
 2. **Create a new branch** for your changes:
 
 ```bash
@@ -149,6 +150,7 @@ Contributions are welcome. If you would like to add features, fix bugs, or impro
 
 3. **Make your changes** and include tests with adequate coverage
 <br>
+
 4. **Submit a Pull Request** with a brief description of what you’ve done.
 
 Please keep code style consistent with the existing project (`ruff` is included in the environment), and run tests before opening a PR.
