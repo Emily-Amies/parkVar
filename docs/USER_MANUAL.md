@@ -1,4 +1,4 @@
-<span style="font-size: 2em; font-weight: bold;"> USER MANUAL</span>
+# USER MANUAL
 
 # parkVar
 
