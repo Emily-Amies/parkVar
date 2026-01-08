@@ -43,7 +43,7 @@ To install the app on the local environment, from the project repository root:
 	pip install . 
 
 ### Alternative: Developer installation
-To install editable (for developer purposes and to check test coverage etc.), from project repository root:
+To install the app in editable mode (for developer purposes and to check test coverage etc.), from project repository root:
 
     pip install -e .
 
@@ -55,7 +55,7 @@ To launch the Flask App, run the following from the project repository root:
 
 The main python script expects the data and logs folders to be located at the repository root level, running the app from a different location may cause errors.
 
-If you encounter the error "ModuleNotFoundError: No module names 'parkVar'" ensure you are running the main script from the repository root, if the error continues try installing editable to ensure the package is on the path (see previous section).
+If you encounter the error "ModuleNotFoundError: No module names 'parkVar'" ensure you are running the main script from the repository root, if the error continues try installing in editable mode to ensure the package is on the path (see previous section).
 
 ## Docker installation
 
