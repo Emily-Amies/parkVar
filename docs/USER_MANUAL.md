@@ -1,4 +1,4 @@
-# USER MANUAL
+# User Manual
 
 # parkVar
 
